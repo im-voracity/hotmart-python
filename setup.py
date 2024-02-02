@@ -1,11 +1,10 @@
-import pathlib
-import setuptools
+from setuptools import setup, find_packages
 
-setuptools.setup(
-    name="hotmart-python",
-    version="0.1.0",
+setup(
+    name="hotmart_python",
+    version="0.1.17",
     description="A Python library for the Hotmart API, simplifying endpoint access and resource management.",
-    long_description=pathlib.Path("README.md").read_text(),
+    long_description=open("README.md").read(),
     long_description_content_type="text/markdown",
     url="https://github.com/im-voracity/hotmart-python",
     author="Matheus Tenório",
@@ -22,11 +21,11 @@ setuptools.setup(
         "Topic :: Software Development :: Libraries",
         "Topic :: Utilities",
     ],
-    python_requires=">=3.10, <= 3.13",
-    install_requires=["certifi==2023.11.17", "charset-normalizer==3.3.2",
-                      "colorama==0.4.6", "coloredlogs==15.0.1", "humanfriendly==10.0",
-                      "idna==3.6", "pyreadline3==3.4.1", "python-dotenv==1.0.1",
-                      "requests==2.31.0", "urllib3==2.1.0"],
-    packages=setuptools.find_packages(),
+    python_requires=">=3.7",
+    install_requires=["requests>=2.31", "coloredlogs>=15.0"],
+    extras_require={
+        "dev": ["python-dotenv"],
+    },
+    packages=find_packages(),
     include_package_data=True,
 )

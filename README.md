@@ -28,7 +28,7 @@ This is a Python Wrapper for the Hotmart API, which allows you to interact with 
 ## Installation
 
 ```bash
-pip install hotmart-python
+pip install hotmart_python
 ```
 
 ## Usage
@@ -36,7 +36,7 @@ pip install hotmart-python
 Here's how you can use the Hotmart Python Wrapper in your Python code:
 
 ```python
-from hotmart.hotmart import Hotmart
+from hotmart_python import Hotmart
 
 # Initialize the Hotmart client
 client = Hotmart(client_id='your_client_id',
@@ -56,7 +56,7 @@ By default, logging is disabled. You can enable it and set the log level by pass
 - `logging.CRITICAL`: Critical level logging, which indicates critical errors that require immediate attention.
 
 ```python
-from hotmart.hotmart import Hotmart
+from hotmart_python import Hotmart
 import logging
 
 # Initialize the Hotmart client with logging enabled and log level set to DEBUG
@@ -93,4 +93,4 @@ Contributions are welcome! If you find any issues or have suggestions for improv
 
 ## License
 
-This project is licensed under the Apache License 2.0 - see the [LICENSE](LICENSE) file for details.
+This project is licensed under the Apache License 2.0 - see the [LICENSE](LICENSE.txt) file for details.

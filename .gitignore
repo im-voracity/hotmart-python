@@ -1,4 +1,7 @@
 /.env
+/.pypirc
 /.venv/
 __pycache__/
 .idea
+*/.egg-info/
+dist

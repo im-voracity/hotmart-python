@@ -1,0 +1,1 @@
+from .hotmart import Hotmart
