@@ -2,6 +2,8 @@
 
 This is a Python Wrapper for the Hotmart API, which allows you to interact with the resources offered by the platform:
 
+**Nota**: A documentação em português está disponível [aqui](docs/README-ptBR.md).
+
 ## Features:
 
 - ✅ Authentication
@@ -94,3 +96,5 @@ Contributions are welcome! If you find any issues or have suggestions for improv
 ## License
 
 This project is licensed under the Apache License 2.0 - see the [LICENSE](LICENSE.txt) file for details.
+
+This package is not affiliated with Hotmart. It is an open-source project that is not officially supported by Hotmart.

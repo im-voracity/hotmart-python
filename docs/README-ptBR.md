@@ -119,3 +119,5 @@ ou envie um pull request no repositório do GitHub.
 
 ## License
 Este projeto está licenciado sob a Licença Apache 2.0 - veja a[LICENÇA](LICENSE.txt) para detalhes.
+
+Essa biblioteca não tem afiliação com a Hotmart. É um projeto open-source que não é oficialmente suportado pela Hotmart.
