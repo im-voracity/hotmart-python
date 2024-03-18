@@ -1,3 +1,17 @@
+[tool.poetry]
+name = "hotmart-python"
+version = "0.1.18"
+description = "A Python library for the Hotmart API, simplifying endpoint access and resource management."
+authors = ["Matheus Tenório <matheusct16@gmail.com>"]
+license = "Apache License, Version 2.0"
+readme = "README.md"
+
+[tool.poetry.dependencies]
+python = "^3.7"
+coloredlogs = "^15.0.1"
+requests = "^2.31.0"
+
+
 [build-system]
-requires = ["setuptools>=61.0", "wheel"]
-build-backend = "setuptools.build_meta"
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"

@@ -41,12 +41,12 @@ Here's how you can use the Hotmart Python Wrapper in your Python code:
 from hotmart_python import Hotmart
 
 # Initialize the Hotmart client
-client = Hotmart(client_id='your_client_id',
+hotmart = Hotmart(client_id='your_client_id',
                  client_secret='your_client_secret',
                  basic='your_basic_token')
 
 # Example usage: Get sales history
-sales_history = client.get_sales_history()
+sales_history = hotmart.get_sales_history()
 print(sales_history)
 ```
 
