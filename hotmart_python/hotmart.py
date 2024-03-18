@@ -1,3 +1,4 @@
+import coloredlogs
 import requests
 import logging
 import time
@@ -6,40 +7,31 @@ import sys
 from typing import List, Dict, Any, Optional
 
 # Base Logging Configs
-logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
-# Check if coloredlogs is available
-try:
-    import coloredlogs
-    coloredlogs_available = True
-except ImportError:
-    coloredlogs_available = False
-
-if coloredlogs_available:
-    # Coloredlogs Configs
-    coloredFormatter = coloredlogs.ColoredFormatter(
-        fmt='[%(name)s] %(asctime)s  %(message)s',
-        level_styles=dict(
-            debug=dict(color='white'),
-            info=dict(color='blue'),
-            warning=dict(color='yellow', bright=True),
-            error=dict(color='red', bold=True, bright=True),
-            critical=dict(color='black', bold=True, background='red'),
-        ),
-        field_styles=dict(
-            name=dict(color='white'),
-            asctime=dict(color='white'),
-            funcName=dict(color='white'),
-            lineno=dict(color='white'),
-        )
+# Coloredlogs Configs
+coloredFormatter = coloredlogs.ColoredFormatter(
+    fmt='[%(name)s] %(asctime)s  %(message)s',
+    level_styles=dict(
+        debug=dict(color='white'),
+        info=dict(color='blue'),
+        warning=dict(color='yellow', bright=True),
+        error=dict(color='red', bold=True, bright=True),
+        critical=dict(color='black', bold=True, background='red'),
+    ),
+    field_styles=dict(
+        name=dict(color='white'),
+        asctime=dict(color='white'),
+        funcName=dict(color='white'),
+        lineno=dict(color='white'),
     )
+)
 
-    # Console Handler Configs
-    ch = logging.StreamHandler(stream=sys.stdout)
-    ch.setFormatter(fmt=coloredFormatter)
-    logger.addHandler(hdlr=ch)
-    logger.setLevel(level=logging.CRITICAL)
+# Console Handler Configs
+ch = logging.StreamHandler(stream=sys.stdout)
+ch.setFormatter(fmt=coloredFormatter)
+logger.addHandler(hdlr=ch)
+logger.setLevel(level=logging.CRITICAL)
 
 # URL Configs
 PRODUCTION_BASE_URL = "https://developers.hotmart.com/payments/api/"
@@ -73,12 +65,6 @@ class Hotmart:
 
         self.logger = logging.getLogger(__name__)
         self.logger.setLevel(log_level)
-
-        if coloredlogs_available:
-            self.logger.info("Coloredlogs is available.")
-        else:
-            self.logger.warning("Coloredlogs is not available. Logging will be in default format.")
-            self.logger.warning("To install coloredlogs, run: pip install coloredlogs")
 
     @staticmethod
     def _build_payload(**kwargs: Any) -> Dict[str, Any]:
