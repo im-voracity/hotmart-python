@@ -4,7 +4,7 @@ setup(
     name="hotmart_python",
     version="0.1.17",
     description="A Python library for the Hotmart API, simplifying endpoint access and resource management.",
-    long_description=open("README.md").read(),
+    long_description=open("docs/README.md").read(),
     long_description_content_type="text/markdown",
     url="https://github.com/im-voracity/hotmart-python",
     author="Matheus Tenório",
