@@ -84,7 +84,7 @@ class Hotmart:
         Logs the instance mode (Sandbox or Production).
         :return: None
         """
-        return self.logger.info(f"Instance in {'Sandbox' if self.sandbox else 'Production'} mode")
+        return self.logger.warning(f"Instance in {'Sandbox' if self.sandbox else 'Production'} mode")
 
     def _make_request(self, method: Any, url: str, headers: Optional[Dict[str, str]] = None,
                       params: Optional[Dict[str, Any]] = None, log_level: int = None) -> Optional[Dict[str, Any]]:
@@ -122,47 +122,50 @@ class Hotmart:
             self.logger.error(f"Error making request to {url}: {e}")
             return None
 
-    def _fetch_new_token(self) -> Optional[Dict[str, Any]]:
+    def _is_token_expired(self) -> bool:
+        """
+        Checks if the current token has expired.
+        :return: True if the token has expired, False otherwise.
+        """
+        return self.token_expires_at is not None and self.token_expires_at < time.time()
+
+    def _fetch_new_token(self) -> Optional[str]:
         """
         Fetches a new access token.
         :return: The new access token if obtained successfully, otherwise None.
         """
-        if self.token_expires_at is not None and self.token_expires_at < time.time():
-            self.logger.warning("Current token has expired. Fetching a new one.")
-        else:
-            self.logger.info("Fetching a new access token.")
+        self.logger.info("Fetching a new access token.")
 
         method_url = 'https://api-sec-vlc.hotmart.com/security/oauth/token'
         headers = {'Authorization': self.basic}
         payload = {'grant_type': 'client_credentials', 'client_id': self.id, 'client_secret': self.secret}
         try:
             response = self._make_request(requests.post, method_url, headers=headers, params=payload)
+            if response is None:
+                return None
             logger.info("Token obtained successfully")
-            return response
+            return response['access_token']
         except requests.exceptions.RequestException as e:
             logger.error(f"Error getting token: {e}")
             return None
 
-    def _get_token(self) -> Optional[Dict[str, Any]]:
+    def _get_token(self) -> Optional[str]:
         """
         Retrieves an access token to authenticate requests.
         :return: The access token if obtained successfully, otherwise None.
         """
-        if self.token_cache is not None and self.token_expires_at is not None:
-            current_time = time.time()
-            if current_time < self.token_expires_at:
-                if not self.token_found_in_cache:
-                    self.logger.info("Token found in cache.")
-                    self.token_found_in_cache = True
-                return self.token_cache
+        if not self._is_token_expired() and self.token_cache is not None:
+            if not self.token_found_in_cache:
+                self.logger.info("Token found in cache.")
+                self.token_found_in_cache = True
+            return self.token_cache
 
-        self.logger.warning("Token not found in cache or expired.")
+        self.logger.info("Token not found in cache or expired.")
 
         token = self._fetch_new_token()
         if token is not None:
-            self.token_cache = token  # Armazena o token em cache
-            self.token_expires_at = time.time() + token.get('expires_in', 0)  # Calcula o tempo de expiração
-            self.token_found_in_cache = False  # Reinicia a variável de controle
+            self.token_cache = token
+            self.token_found_in_cache = False
         return token
 
     def _get_with_token(self, url: str, params: Optional[Dict[str, str]] = None) -> Optional[Dict[str, Any]]:
@@ -172,7 +175,9 @@ class Hotmart:
         :param params: Optional request parameters.
         :return: The JSON Response if successful, otherwise None.
         """
-        token = self._get_token().get('access_token')
+        token = self._get_token()
+        if token is None:
+            return None
         headers = {'Authorization': f'Bearer {token}'}
         return self._make_request(requests.get, url, headers=headers, params=params)
 
