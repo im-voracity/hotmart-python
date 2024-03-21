@@ -133,59 +133,53 @@ class TestHotmart(unittest.TestCase):
         result = self.hotmart._get_token()
         self.assertIsNone(result)
 
-    @patch.object(Hotmart, '_get_token')
-    @patch.object(Hotmart, '_make_request')
-    def test_successful_get_with_token(self, mock_make_request, mock_get_token):
-        mock_get_token.return_value = {"access_token": "abc123"}
-        mock_make_request.return_value = {"success": True}
-        result = self.hotmart._get_with_token('https://testurl.com')
+    @patch.object(Hotmart, '_request_with_token')
+    def test_successful_get_with_token(self, mock_request_with_token):
+        mock_request_with_token.return_value = {"success": True}
+        result = self.hotmart._request_with_token('GET', 'https://testurl.com')
         self.assertEqual(result, {"success": True})
 
-    @patch.object(Hotmart, '_get_token')
-    @patch.object(Hotmart, '_make_request')
-    def test_get_with_token_when_make_request_returns_none(self, mock_make_request, mock_get_token):
-        mock_get_token.return_value = {"access_token": "abc123"}
-        mock_make_request.return_value = None
-        result = self.hotmart._get_with_token('https://testurl.com')
+    @patch.object(Hotmart, '_request_with_token')
+    def test_get_with_token_when_make_request_returns_none(self, mock_request_with_token):
+        mock_request_with_token.return_value = None
+        result = self.hotmart._request_with_token('GET', 'https://testurl.com')
         self.assertIsNone(result)
 
-    @patch.object(Hotmart, '_get_token')
-    @patch.object(Hotmart, '_make_request')
-    def test_get_with_token_when_get_token_returns_none(self, mock_make_request, mock_get_token):
-        mock_get_token.return_value = None
-        mock_make_request.return_value = {"success": True}
-        result = self.hotmart._get_with_token('https://testurl.com')
+    @patch.object(Hotmart, '_request_with_token')
+    def test_get_with_token_when_get_token_returns_none(self, mock_request_with_token):
+        mock_request_with_token.return_value = None
+        result = self.hotmart._request_with_token('GET', 'https://testurl.com')
         self.assertIsNone(result)
 
-    @patch.object(Hotmart, '_get_with_token')
-    def test_pagination_with_no_pagination(self, mock_get_with_token):
-        mock_get_with_token.return_value = {"items": [{"id": 5}, {"id": 6}], "page_info": {}}
-        result = self.hotmart._pagination('https://testurl.com', params={}, paginate=False)
+    @patch.object(Hotmart, '_request_with_token')
+    def test_pagination_with_no_pagination(self, mock_request_with_token):
+        mock_request_with_token.return_value = {"items": [{"id": 5}, {"id": 6}], "page_info": {}}
+        result = self.hotmart._pagination('GET', 'https://testurl.com', params={}, paginate=False)
         self.assertEqual(result, {"items": [{"id": 5}, {"id": 6}], "page_info": {}})
 
-    @patch.object(Hotmart, '_get_with_token')
-    def test_pagination_with_successful_pagination(self, mock_get_with_token):
-        mock_get_with_token.side_effect = [
+    @patch.object(Hotmart, '_request_with_token')
+    def test_pagination_with_successful_pagination(self, mock_request_with_token):
+        mock_request_with_token.side_effect = [
             {"items": [{"id": 1}, {"id": 2}], "page_info": {"next_page_token": "token1"}},
             {"items": [{"id": 3}, {"id": 4}], "page_info": {"next_page_token": "token2"}},
             {"items": [{"id": 5}, {"id": 6}], "page_info": {}}
         ]
-        result = self.hotmart._pagination('http://testurl.com', params={}, paginate=True)
+        result = self.hotmart._pagination('GET', 'http://testurl.com', params={}, paginate=True)
         self.assertEqual(result, [{"id": 1}, {"id": 2}, {"id": 3}, {"id": 4}, {"id": 5}, {"id": 6}])
 
-    @patch.object(Hotmart, '_get_with_token')
-    def test_pagination_with_failed_first_page_fetch(self, mock_get_with_token):
-        mock_get_with_token.return_value = None
-        result = self.hotmart._pagination('https://testurl.com', params={}, paginate=True)
+    @patch.object(Hotmart, '_request_with_token')
+    def test_pagination_with_failed_first_page_fetch(self, mock_request_with_token):
+        mock_request_with_token.return_value = None
+        result = self.hotmart._pagination('GET', 'https://testurl.com', params={}, paginate=True)
         self.assertIsNone(result)
 
-    @patch.object(Hotmart, '_get_with_token')
-    def test_pagination_with_failed_next_page_fetch(self, mock_get_with_token):
-        mock_get_with_token.side_effect = [
+    @patch.object(Hotmart, '_request_with_token')
+    def test_pagination_with_failed_next_page_fetch(self, mock_request_with_token):
+        mock_request_with_token.side_effect = [
             {"items": [{"id": 1}, {"id": 2}], "page_info": {"next_page_token": "token1"}},
             None
         ]
-        result = self.hotmart._pagination('https://testurl.com', params={}, paginate=True)
+        result = self.hotmart._pagination('GET', 'https://testurl.com', params={}, paginate=True)
         self.assertIsNone(result)
 
 

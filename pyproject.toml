@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "hotmart-python"
-version = "0.1.19"
+version = "0.1.20"
 description = "A Python library for the Hotmart API, simplifying endpoint access and resource management."
 authors = ["Matheus Tenório <matheusct16@gmail.com>"]
 license = "Apache License, Version 2.0"
