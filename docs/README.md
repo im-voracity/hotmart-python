@@ -35,7 +35,7 @@ This is a Python Wrapper for the Hotmart API, which allows you to interact with 
 ## Installation
 
 ```bash
-pip install hotmart_python
+pip install hotmart-python
 ```
 
 ## Usage
