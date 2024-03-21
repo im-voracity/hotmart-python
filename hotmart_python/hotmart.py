@@ -186,17 +186,17 @@ class Hotmart:
             'Content-Type': 'application/json',
             'Authorization': f'Bearer {token}'
         }
-    
+
         method_mapping = {
             'GET': requests.get,
             'POST': requests.post,
             'PATCH': requests.patch
         }
-    
+
         if method.upper() not in method_mapping:
             self.logger.error(f"Unsupported method: {method}")
             return None
-    
+
         return self._make_request(method_mapping[method.upper()], url, headers=headers, params=params, body=body)
 
     def _pagination(self, method: str, url: str, params: Optional[Dict[str, Any]] = None, paginate: bool = False) -> Optional[List[Dict[str, Any]]]:
@@ -224,7 +224,7 @@ class Hotmart:
             next_page_token = response["page_info"]["next_page_token"]
             self.logger.info(f"Fetching next page with token: {next_page_token}")
             params["page_token"] = next_page_token
-            response = self._request_with_token(url, params=params)
+            response = self._request_with_token(method, url, params=params)
 
             if response is None:
                 self.logger.error("Failed to fetch next page.")
@@ -265,7 +265,7 @@ class Hotmart:
         payload = self._build_payload(**kwargs)
         return self._pagination(method=method, url=url, params=payload, paginate=paginate)
 
-    def get_sales_users(self, paginate: bool = True, **kwargs: Any) -> Optional[Dict[str, Any]]:
+    def get_sales_participants(self, paginate: bool = True, **kwargs: Any) -> Optional[Dict[str, Any]]:
         """
         Retrieves sales user data based on the provided filters.
 

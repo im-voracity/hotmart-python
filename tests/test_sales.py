@@ -61,26 +61,26 @@ class TestHotmart(unittest.TestCase):
 
     @patch.object(Hotmart, '_build_payload')
     @patch.object(Hotmart, '_pagination')
-    def test_sales_users_retrieval_with_pagination(self, mock_pagination, mock_build_payload):
+    def test_sales_participants_retrieval_with_pagination(self, mock_pagination, mock_build_payload):
         mock_build_payload.return_value = {"filter1": "value1"}
         mock_pagination.return_value = [{"id": 1}, {"id": 2}]
-        result = self.hotmart.get_sales_users(paginate=True, filter1="value1")
+        result = self.hotmart.get_sales_participants(paginate=True, filter1="value1")
         self.assertEqual(result, [{"id": 1}, {"id": 2}])
 
     @patch.object(Hotmart, '_build_payload')
     @patch.object(Hotmart, '_pagination')
-    def test_sales_users_retrieval_without_pagination(self, mock_pagination, mock_build_payload):
+    def test_sales_participants_retrieval_without_pagination(self, mock_pagination, mock_build_payload):
         mock_build_payload.return_value = {"filter1": "value1"}
         mock_pagination.return_value = [{"id": 1}, {"id": 2}]
-        result = self.hotmart.get_sales_users(paginate=False, filter1="value1")
+        result = self.hotmart.get_sales_participants(paginate=False, filter1="value1")
         self.assertEqual(result, [{"id": 1}, {"id": 2}])
 
     @patch.object(Hotmart, '_build_payload')
     @patch.object(Hotmart, '_pagination')
-    def test_sales_users_retrieval_with_failed_pagination(self, mock_pagination, mock_build_payload):
+    def test_sales_participants_retrieval_with_failed_pagination(self, mock_pagination, mock_build_payload):
         mock_build_payload.return_value = {"filter1": "value1"}
         mock_pagination.return_value = None
-        result = self.hotmart.get_sales_users(paginate=True, filter1="value1")
+        result = self.hotmart.get_sales_participants(paginate=True, filter1="value1")
         self.assertIsNone(result)
 
     @patch.object(Hotmart, '_build_payload')
