@@ -33,10 +33,14 @@ jobs:
 
       - name: Run tests
         id: tests
-        run: poetry run python -m unittest discover -s tests
+        run: |
+          poetry env shell
+          poetry run python -m unittest discover -s tests
         if: steps.install.outcome == 'success'
 
       - name: Run flake8
         id: flake8
-        run: poetry run flake8
+        run: |
+          poetry env shell
+          poetry run flake8
         if: steps.install.outcome == 'success'
