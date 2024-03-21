@@ -1,7 +1,7 @@
 import requests
 import unittest
 from unittest.mock import patch
-from hotmart_python import Hotmart
+from hotmart_python import Hotmart, RequestException, HTTPRequestException
 
 
 class TestHotmart(unittest.TestCase):
@@ -27,160 +27,150 @@ class TestHotmart(unittest.TestCase):
 
     # Sandbox Mode
     def test_sandbox_mode_true(self):
-        hotmart = Hotmart(client_id="123", client_secret="123", basic="123", sandbox=True)
+        hotmart = Hotmart(client_id='123', client_secret='123', basic='123', sandbox=True)
         self.assertTrue(hotmart.sandbox)
 
     def test_sandbox_mode_false(self):
-        hotmart1 = Hotmart(client_id="123", client_secret="123", basic="123")
-        hotmart2 = Hotmart(client_id="123", client_secret="123", basic="123", sandbox=False)
+        hotmart1 = Hotmart(client_id='123', client_secret='123', basic='123')
+        hotmart2 = Hotmart(client_id='123', client_secret='123', basic='123', sandbox=False)
 
-        arr = [hotmart1, hotmart2]
-
-        for hotmart in arr:
-            self.assertFalse(hotmart.sandbox)
+        self.assertFalse(hotmart1.sandbox)
+        self.assertFalse(hotmart2.sandbox)
 
     @patch('requests.get')
-    def test_successful_request_with_get_method(self, mock_get):
+    def test_successful_request(self, mock_get):
         mock_get.return_value.status_code = 200
         mock_get.return_value.json.return_value = {"success": True}
-        response = self.hotmart._make_request(requests.get, 'https://testurl.com', headers={}, params={})
-        self.assertEqual(response, {"success": True})
-
-    @patch('requests.post')
-    def test_successful_request_with_post_method(self, mock_post):
-        mock_post.return_value.status_code = 200
-        mock_post.return_value.json.return_value = {"success": True}
-        response = self.hotmart._make_request(requests.post, 'https://testurl.com', headers={}, params={})
+        response = self.hotmart._make_request(requests.get, 'https://example.com')
         self.assertEqual(response, {"success": True})
 
     @patch('requests.get')
-    def test_request_with_http_error(self, mock_get):
+    def test_http_error_request(self, mock_get):
         mock_get.return_value.raise_for_status.side_effect = requests.exceptions.HTTPError
-        response = self.hotmart._make_request(requests.get, 'https://testurl.com', headers={}, params={})
-        self.assertIsNone(response)
+        with self.assertRaises(HTTPRequestException):
+            self.hotmart._make_request(requests.get, 'https://example.com')
 
     @patch('requests.get')
-    def test_request_with_request_exception(self, mock_get):
-        mock_get.return_value.raise_for_status.side_effect = requests.exceptions.RequestException
-        response = self.hotmart._make_request(requests.get, 'https://testurl.com', headers={}, params={})
-        self.assertIsNone(response)
+    def test_request_exception(self, mock_get):
+        mock_get.side_effect = requests.exceptions.RequestException
+        with self.assertRaises(RequestException):
+            self.hotmart._make_request(requests.get, 'https://example.com')
 
-    def test_token_is_expired_when_token_expires_at_is_none(self):
-        self.hotmart.token_expires_at = None
-        self.assertFalse(self.hotmart._is_token_expired())
+    @patch('requests.get')
+    def test_forbidden_request_in_sandbox_mode(self, mock_get):
+        self.hotmart.sandbox = True
+        mock_get.return_value.status_code = 403
+        mock_get.return_value.raise_for_status.side_effect = requests.exceptions.HTTPError
+        with self.assertRaises(HTTPRequestException):
+            self.hotmart._make_request(requests.get, 'https://example.com')
+
+    @patch('requests.get')
+    def test_forbidden_request_in_production_mode(self, mock_get):
+        self.hotmart.sandbox = False
+        mock_get.return_value.status_code = 403
+        mock_get.return_value.raise_for_status.side_effect = requests.exceptions.HTTPError
+        with self.assertRaises(HTTPRequestException):
+            self.hotmart._make_request(requests.get, 'https://example.com')
 
     @patch('time.time')
-    def test_token_is_expired_when_token_expires_at_is_in_the_future(self, mock_time):
-        mock_time.return_value = 1000
-        self.hotmart.token_expires_at = 2000
-        self.assertFalse(self.hotmart._is_token_expired())
-
-    @patch('time.time')
-    def test_token_is_expired_when_token_expires_at_is_in_the_past(self, mock_time):
-        mock_time.return_value = 3000
-        self.hotmart.token_expires_at = 2000
+    def test_token_expired_when_expiry_in_past(self, mock_time):
+        mock_time.return_value = 100
+        self.hotmart.token_expires_at = 99
         self.assertTrue(self.hotmart._is_token_expired())
-    
-    @patch('requests.post')
-    def test_successful_token_fetch(self, mock_post):
-        mock_post.return_value.status_code = 200
-        mock_post.return_value.json.return_value = {
-            'access_token': 'abc123'
-        }
-        response = self.hotmart._fetch_new_token()
-        self.assertEqual(response, 'abc123')
+
+    @patch('time.time')
+    def test_token_not_expired_when_expiry_in_future(self, mock_time):
+        mock_time.return_value = 100
+        self.hotmart.token_expires_at = 101
+        self.assertFalse(self.hotmart._is_token_expired())
 
     @patch('requests.post')
-    def test_failed_token_fetch_due_to_request_exception(self, mock_post):
+    def test_token_obtained_successfully(self, mock_post):
+        mock_post.return_value.json.return_value = {'access_token': 'test_token'}
+        token = self.hotmart._fetch_new_token()
+        self.assertEqual(token, 'test_token')
+
+    @patch('requests.post')
+    def test_token_obtained_failure(self, mock_post):
         mock_post.side_effect = requests.exceptions.RequestException
-        response = self.hotmart._fetch_new_token()
-        self.assertIsNone(response)
+        with self.assertRaises(RequestException):
+            self.hotmart._fetch_new_token()
 
     @patch.object(Hotmart, '_is_token_expired')
     @patch.object(Hotmart, '_fetch_new_token')
-    def test_token_retrieval_when_token_not_expired_and_in_cache(self, mock_fetch_new_token, mock_is_token_expired):
+    def test_token_found_in_cache(self, mock_fetch_new_token, mock_is_token_expired):
         mock_is_token_expired.return_value = False
-        self.hotmart.token_cache = "abc123"
-        self.hotmart.token_found_in_cache = False
-        result = self.hotmart._get_token()
-        self.assertEqual(result, "abc123")
+        self.hotmart.token_cache = 'test_token'
+        token = self.hotmart._get_token()
+        self.assertEqual(token, 'test_token')
         mock_fetch_new_token.assert_not_called()
 
     @patch.object(Hotmart, '_is_token_expired')
     @patch.object(Hotmart, '_fetch_new_token')
-    def test_token_retrieval_when_token_expired_and_in_cache(self, mock_fetch_new_token, mock_is_token_expired):
+    def test_token_not_in_cache_and_fetched_successfully(self, mock_fetch_new_token, mock_is_token_expired):
         mock_is_token_expired.return_value = True
-        self.hotmart.token_cache = "abc123"
-        mock_fetch_new_token.return_value = "def456"
-        result = self.hotmart._get_token()
-        self.assertEqual(result, "def456")
+        mock_fetch_new_token.return_value = 'new_token'
+        token = self.hotmart._get_token()
+        self.assertEqual(token, 'new_token')
 
     @patch.object(Hotmart, '_is_token_expired')
     @patch.object(Hotmart, '_fetch_new_token')
-    def test_token_retrieval_when_token_not_in_cache(self, mock_fetch_new_token, mock_is_token_expired):
+    def test_token_not_in_cache_and_fetch_failed(self, mock_fetch_new_token, mock_is_token_expired):
         mock_is_token_expired.return_value = True
-        self.hotmart.token_cache = None
-        mock_fetch_new_token.return_value = "def456"
-        result = self.hotmart._get_token()
-        self.assertEqual(result, "def456")
-
-    @patch.object(Hotmart, '_is_token_expired')
-    @patch.object(Hotmart, '_fetch_new_token')
-    def test_token_retrieval_when_fetch_new_token_returns_none(self, mock_fetch_new_token, mock_is_token_expired):
-        mock_is_token_expired.return_value = True
-        self.hotmart.token_cache = None
         mock_fetch_new_token.return_value = None
-        result = self.hotmart._get_token()
-        self.assertIsNone(result)
+        token = self.hotmart._get_token()
+        self.assertIsNone(token)
 
-    @patch.object(Hotmart, '_request_with_token')
-    def test_successful_get_with_token(self, mock_request_with_token):
-        mock_request_with_token.return_value = {"success": True}
-        result = self.hotmart._request_with_token('GET', 'https://testurl.com')
+    @patch.object(Hotmart, '_get_token')
+    @patch.object(Hotmart, '_make_request')
+    def test_successful_request_with_token(self, mock_make_request, mock_get_token):
+        mock_get_token.return_value = 'test_token'
+        mock_make_request.return_value = {"success": True}
+        result = self.hotmart._request_with_token('GET', 'https://example.com')
         self.assertEqual(result, {"success": True})
 
-    @patch.object(Hotmart, '_request_with_token')
-    def test_get_with_token_when_make_request_returns_none(self, mock_request_with_token):
-        mock_request_with_token.return_value = None
-        result = self.hotmart._request_with_token('GET', 'https://testurl.com')
-        self.assertIsNone(result)
+    @patch.object(Hotmart, '_get_token')
+    @patch.object(Hotmart, '_make_request')
+    def test_failed_request_with_token(self, mock_make_request, mock_get_token):
+        mock_get_token.return_value = 'test_token'
+        mock_make_request.side_effect = RequestException("Error", "url")
+        with self.assertRaises(RequestException):
+            self.hotmart._request_with_token('GET', 'https://example.com')
+
+    @patch.object(Hotmart, '_get_token')
+    @patch.object(Hotmart, '_make_request')
+    def test_unsupported_method_with_token(self, mock_make_request, mock_get_token):
+        mock_get_token.return_value = 'test_token'
+        with self.assertRaises(ValueError):
+            self.hotmart._request_with_token('PUT', 'https://example.com')
 
     @patch.object(Hotmart, '_request_with_token')
-    def test_get_with_token_when_get_token_returns_none(self, mock_request_with_token):
-        mock_request_with_token.return_value = None
-        result = self.hotmart._request_with_token('GET', 'https://testurl.com')
-        self.assertIsNone(result)
+    def test_pagination_without_pagination(self, mock_request_with_token):
+        mock_request_with_token.return_value = {"items": ["item1", "item2"]}
+        result = self.hotmart._pagination('GET', 'https://example.com')
+        self.assertEqual(result, ["item1", "item2"])
 
     @patch.object(Hotmart, '_request_with_token')
-    def test_pagination_with_no_pagination(self, mock_request_with_token):
-        mock_request_with_token.return_value = {"items": [{"id": 5}, {"id": 6}], "page_info": {}}
-        result = self.hotmart._pagination('GET', 'https://testurl.com', params={}, paginate=False)
-        self.assertEqual(result, {"items": [{"id": 5}, {"id": 6}], "page_info": {}})
+    def test_pagination_with_single_page(self, mock_request_with_token):
+        mock_request_with_token.return_value = {"items": ["item1", "item2"], "page_info": {}}
+        result = self.hotmart._pagination('GET', 'https://example.com', paginate=True)
+        self.assertEqual(result, ["item1", "item2"])
 
     @patch.object(Hotmart, '_request_with_token')
-    def test_pagination_with_successful_pagination(self, mock_request_with_token):
+    def test_pagination_with_multiple_pages(self, mock_request_with_token):
         mock_request_with_token.side_effect = [
-            {"items": [{"id": 1}, {"id": 2}], "page_info": {"next_page_token": "token1"}},
-            {"items": [{"id": 3}, {"id": 4}], "page_info": {"next_page_token": "token2"}},
-            {"items": [{"id": 5}, {"id": 6}], "page_info": {}}
+            {"items": ["item1", "item2"], "page_info": {"next_page_token": "token"}},
+            {"items": ["item3", "item4"], "page_info": {}}
         ]
-        result = self.hotmart._pagination('GET', 'http://testurl.com', params={}, paginate=True)
-        self.assertEqual(result, [{"id": 1}, {"id": 2}, {"id": 3}, {"id": 4}, {"id": 5}, {"id": 6}])
+        params = {}
+        result = self.hotmart._pagination('GET', 'https://example.com', params=params, paginate=True)
+        self.assertEqual(result, ["item1", "item2", "item3", "item4"])
 
     @patch.object(Hotmart, '_request_with_token')
-    def test_pagination_with_failed_first_page_fetch(self, mock_request_with_token):
+    def test_pagination_with_failed_first_page(self, mock_request_with_token):
         mock_request_with_token.return_value = None
-        result = self.hotmart._pagination('GET', 'https://testurl.com', params={}, paginate=True)
-        self.assertIsNone(result)
-
-    @patch.object(Hotmart, '_request_with_token')
-    def test_pagination_with_failed_next_page_fetch(self, mock_request_with_token):
-        mock_request_with_token.side_effect = [
-            {"items": [{"id": 1}, {"id": 2}], "page_info": {"next_page_token": "token1"}},
-            None
-        ]
-        result = self.hotmart._pagination('GET', 'https://testurl.com', params={}, paginate=True)
-        self.assertIsNone(result)
+        with self.assertRaises(ValueError):
+            self.hotmart._pagination('GET', 'https://example.com', paginate=True)
 
 
 if __name__ == '__main__':

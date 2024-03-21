@@ -1,3 +1,11 @@
+0.2.2 / 2024-03-21
+==================
+
+* Refactored helper methods for better error handling
+* Refactored tests to reflect the changes in the helper methods
+* Changed _pagination output to return a list of dicts instead a list of lists.
+* Removed unnecessary setup.py file.
+
 0.2.1 / 2024-03-20
 ==================
 
@@ -10,7 +18,7 @@
 * Changed get_sales_users to get_sales_participants to better reflect the endpoint's name in
   the [API Reference](https://developers.hotmart.com/docs/en/v1/sales/sales-users/)
 * Changed tests references to the updated name of the get_sales_participants
-* Changed the version of the package to 0.2.1
+* Migrated to Poetry for dependency management.
 
 0.1.20 / 2024
 ==================
