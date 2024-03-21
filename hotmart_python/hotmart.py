@@ -33,6 +33,27 @@ ch.setFormatter(fmt=coloredFormatter)
 logger.addHandler(hdlr=ch)
 logger.setLevel(level=logging.CRITICAL)
 
+
+class HTTPRequestException(Exception):
+    def __init__(self, message, status_code, url, response_body=None):
+        super().__init__(message)
+        self.status_code = status_code
+        self.url = url
+        self.response_body = response_body
+
+    def __str__(self):
+        return f"HTTPRequestException: {self.args[0]}, Status Code: {self.status_code}, URL: {self.url}, Response Body: {self.response_body}"
+
+
+class RequestException(Exception):
+    def __init__(self, message, url):
+        super().__init__(message)
+        self.url = url
+
+    def __str__(self):
+        return f"RequestException: {self.args[0]}, URL: {self.url}"
+
+
 # URL Configs
 PRODUCTION_BASE_URL = "https://developers.hotmart.com/payments/api/"
 SANDBOX_BASE_URL = "https://sandbox.hotmart.com/payments/api/"
@@ -107,22 +128,28 @@ class Hotmart:
             self.logger.debug(f"Request headers: {headers}")
             self.logger.debug(f"Request params: {params}")
             self.logger.debug(f"Request body: {body}")
+
             response = method(url, headers=headers, params=params, data=body)
             self.logger.debug(f"Response content: {response.text}")
             response.raise_for_status()
             return response.json()
+
         except requests.exceptions.HTTPError:
             # noinspection PyUnboundLocalVariable
-            if response.status_code == 403:
-                error_message = "Forbidden."
-                self.logger.error(f"Error {response.status_code}: {error_message}")
-                if self.sandbox:
-                    self.logger.error("Check if the provided credentials were created for Sandbox mode.")
-                else:
-                    self.logger.error("Perhaps the provided credentials are for Sandbox mode?")
+            if response.status_code != 403:
+                raise HTTPRequestException(f"HTTP Error", response.status_code, url, body)
+            error_message = "Forbidden."
+            self.logger.error(f"Error {response.status_code}: {error_message}")
+            if self.sandbox:
+                self.logger.error("Check if the provided credentials are for Sandbox mode.")
+
+            self.logger.error("Perhaps the provided credentials are for Sandbox mode?")
+            raise HTTPRequestException(error_message, response.status_code, url, body)
+
         except requests.exceptions.RequestException as e:
-            self.logger.error(f"Error making request to {url}: {e}")
-            return None
+            error_message = str(e) if str(e) else "An error occurred while making the request"
+            self.logger.error(f"Error making request to {url}: {error_message}")
+            raise RequestException(f"Error making request to {url}: {error_message}", url)
 
     def _is_token_expired(self) -> bool:
         """
@@ -131,25 +158,16 @@ class Hotmart:
         """
         return self.token_expires_at is not None and self.token_expires_at < time.time()
 
-    def _fetch_new_token(self) -> Optional[str]:
-        """
-        Fetches a new access token.
-        :return: The new access token if obtained successfully, otherwise None.
-        """
+    def _fetch_new_token(self) -> str:
         self.logger.info("Fetching a new access token.")
 
         method_url = 'https://api-sec-vlc.hotmart.com/security/oauth/token'
         headers = {'Authorization': self.basic}
         payload = {'grant_type': 'client_credentials', 'client_id': self.id, 'client_secret': self.secret}
-        try:
-            response = self._make_request(requests.post, method_url, headers=headers, params=payload)
-            if response is None:
-                return None
-            logger.info("Token obtained successfully")
-            return response['access_token']
-        except requests.exceptions.RequestException as e:
-            logger.error(f"Error getting token: {e}")
-            return None
+
+        response = self._make_request(requests.post, method_url, headers=headers, params=payload)
+        self.logger.info("Token obtained successfully")
+        return response['access_token']
 
     def _get_token(self) -> Optional[str]:
         """
@@ -170,18 +188,18 @@ class Hotmart:
             self.token_found_in_cache = False
         return token
 
-    def _request_with_token(self, method: str, url: str, body: Optional[Dict[str, Any]] = None, params: Optional[Dict[str, Any]] = None) -> Optional[Dict[str, Any]]:
+    def _request_with_token(self, method: str, url: str, body: Optional[Dict[str, Any]] = None,
+                            params: Optional[Dict[str, Any]] = None) -> Dict[str, Any]:
         """
         Makes an authenticated request (GET, POST, PATCH, etc.) to the specified URL with the given body or params.
         :param method: The HTTP method (e.g., 'GET', 'POST', 'PATCH').
         :param url: the URL to make the request to.
         :param body: Optional request body.
         :param params: Optional request parameters.
-        :return: The JSON Response if successful, otherwise None.
+        :return: The JSON Response if successful, otherwise raises an exception.
         """
         token = self._get_token()
-        if token is None:
-            return None
+
         headers = {
             'Content-Type': 'application/json',
             'Authorization': f'Bearer {token}'
@@ -194,12 +212,12 @@ class Hotmart:
         }
 
         if method.upper() not in method_mapping:
-            self.logger.error(f"Unsupported method: {method}")
-            return None
+            raise ValueError(f"Unsupported method: {method}")
 
         return self._make_request(method_mapping[method.upper()], url, headers=headers, params=params, body=body)
 
-    def _pagination(self, method: str, url: str, params: Optional[Dict[str, Any]] = None, paginate: bool = False) -> Optional[List[Dict[str, Any]]]:
+    def _pagination(self, method: str, url: str, params: Optional[Dict[str, Any]] = None, paginate: bool = False) -> \
+            Optional[List[Dict[str, Any]]]:
         """
         Retrieves all pages of data for a paginated endpoint.
         :param url: The URL of the paginated endpoint.
@@ -208,15 +226,15 @@ class Hotmart:
         :return: A list containing data from all pages, or None if an error occurred.
         """
         if not paginate:
-            return self._request_with_token(method=method, url=url, params=params)
+            response = self._request_with_token(method=method, url=url, params=params)
+            return response.get("items", []) if response else None
         all_items = []
 
         self.logger.info("Fetching first page...")
         response = self._request_with_token(method=method, url=url, params=params)
 
         if response is None:
-            self.logger.error("Failed to fetch first page.")
-            return None
+            raise ValueError("Failed to fetch first page.")
 
         all_items.extend(response.get("items", []))
 
@@ -227,8 +245,7 @@ class Hotmart:
             response = self._request_with_token(method, url, params=params)
 
             if response is None:
-                self.logger.error("Failed to fetch next page.")
-                return None
+                raise ValueError(f"Failed to fetch next page with token: {next_page_token}")
 
             all_items.extend(response.get("items", []))
 
@@ -344,7 +361,8 @@ class Hotmart:
         payload = self._build_payload(**kwargs)
         return self._pagination(method=method, url=url, params=payload, paginate=paginate)
 
-    def get_subscription_purchases(self, subscriber_code, paginate: bool = False, **kwargs: Any) -> Optional[Dict[str, Any]]:
+    def get_subscription_purchases(self, subscriber_code, paginate: bool = False, **kwargs: Any) -> Optional[
+        Dict[str, Any]]:
         """
         Retrieves subscription purchases data based on the provided filters.
 
@@ -378,7 +396,8 @@ class Hotmart:
         }
         return self._request_with_token(method=method, url=url, body=payload)
 
-    def reactivate_and_charge_subscription(self, subscriber_code: list[str], charge: bool = False) -> Optional[Dict[str, Any]]:
+    def reactivate_and_charge_subscription(self, subscriber_code: list[str], charge: bool = False) -> Optional[
+        Dict[str, Any]]:
         """
         Reactivates and charges a subscription.
         :param subscriber_code: The subscriber code you want to reactivate and charge the subscription
