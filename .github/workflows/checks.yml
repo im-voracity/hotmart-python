@@ -12,9 +12,11 @@ jobs:
     runs-on: ubuntu-20.04
     steps:
       - name: Checkout code
+        id: checkout
         uses: actions/checkout@v2
 
       - name: Setup Python
+        id: python
         uses: actions/setup-python@v2
         with:
           python-version: "3.8.1"
@@ -26,10 +28,15 @@ jobs:
           virtualenvs-in-project: true
 
       - name: Install dependencies
+        id: install
         run: poetry install
 
       - name: Run tests
+        id: tests
         run: python -m unittest discover -s tests
+        if: steps.install.outcome == 'success'
 
       - name: Run flake8
+        id: flake8
         run: flake8
+        if: steps.install.outcome == 'success'
