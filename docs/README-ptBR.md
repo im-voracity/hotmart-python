@@ -19,19 +19,9 @@ Oficial da plataforma.:
 
 - ✅ Autenticação
 - ✅ Todos os parâmetros de URL são suportados
-- Vendas
-    - ✅ Histórico de vendas
-    - ✅ Sumário de vendas
-    - ✅ Participantes de vendas
-    - ✅ Comissões de vendas
-    - ✅ Detalhamento de preços de vendas
-
-- Assinaturas
-    - ✅ Obter assinaturas
-    - ✅ Sumário de assinaturas
-    - ✅ Obter compras de assinantes
-    - ✅ Cancelar assinatura
-    - ✅ Reativar e cobrar assinatura
+- ✅ Todos os endpoints de vendas
+- ✅ Todos os endpoints de assinaturas
+- ✅ Todos os endpoints de cupons
 
 ## Instalção
 

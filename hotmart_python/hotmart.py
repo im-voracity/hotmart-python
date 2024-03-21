@@ -92,6 +92,12 @@ class Hotmart:
         self.logger = logging.getLogger(__name__)
         self.logger.setLevel(log_level)
 
+    def _sandbox_error_warning(self):
+        self.logger.warning("At the date of last update for this library"
+                            " the Hotmart Sandbox API does NOT supported this method.")
+        self.logger.warning("This method probably won't work in the Sandbox mode.")
+        return
+
     @staticmethod
     def _build_payload(**kwargs: Any) -> Dict[str, Any]:
         """
@@ -235,7 +241,8 @@ class Hotmart:
         method_mapping = {
             'GET': requests.get,
             'POST': requests.post,
-            'PATCH': requests.patch
+            'PATCH': requests.patch,
+            'DELETE': requests.delete
         }
 
         if method.upper() not in method_mapping:
@@ -293,6 +300,7 @@ class Hotmart:
         :return: Sales history data if available, otherwise None.
         """
         self._log_instance_mode()
+
         method = "get"
         url = f'{self.base_url}/sales/history'
         payload = self._build_payload(**kwargs)
@@ -310,6 +318,7 @@ class Hotmart:
         """
 
         self._log_instance_mode()
+
         method = "get"
         url = f'{self.base_url}/sales/summary'
         payload = self._build_payload(**kwargs)
@@ -328,6 +337,7 @@ class Hotmart:
         """
 
         self._log_instance_mode()
+
         method = "get"
         url = f'{self.base_url}/sales/users'
         payload = self._build_payload(**kwargs)
@@ -345,6 +355,7 @@ class Hotmart:
         """
 
         self._log_instance_mode()
+
         method = "get"
         url = f'{self.base_url}/sales/commissions'
         payload = self._build_payload(**kwargs)
@@ -362,6 +373,7 @@ class Hotmart:
         """
 
         self._log_instance_mode()
+
         method = "get"
         url = f'{self.base_url}/sales/price/details'
         payload = self._build_payload(**kwargs)
@@ -379,6 +391,7 @@ class Hotmart:
         """
 
         self._log_instance_mode()
+
         method = "get"
         url = f'{self.base_url}/subscriptions'
         payload = self._build_payload(**kwargs)
@@ -395,6 +408,7 @@ class Hotmart:
         """
 
         self._log_instance_mode()
+
         method = "get"
         url = f'{self.base_url}/subscriptions/summary'
         payload = self._build_payload(**kwargs)
@@ -413,6 +427,9 @@ class Hotmart:
         """
 
         self._log_instance_mode()
+        if self.sandbox:
+            self._sandbox_error_warning()
+
         method = "get"
         url = f'{self.base_url}/subscriptions/{subscriber_code}/purchases'
         payload = self._build_payload(**kwargs)
@@ -429,6 +446,9 @@ class Hotmart:
         """
 
         self._log_instance_mode()
+        if self.sandbox:
+            self._sandbox_error_warning()
+
         method = "post"
         url = f'{self.base_url}/subscriptions/cancel'
         payload = {
@@ -445,10 +465,13 @@ class Hotmart:
         :param subscriber_code: The subscriber code you want to reactivate
         and charge the subscription
         :param charge: Whether to make a new charge to the subscriber or not (default is False).
-        :return:
+        :return: A dict containing in
         """
 
         self._log_instance_mode()
+        if self.sandbox:
+            self._sandbox_error_warning()
+
         method = "post"
         url = f'{self.base_url}/subscriptions/reactivate'
         payload = {
@@ -463,10 +486,13 @@ class Hotmart:
 
         :param subscriber_code: The subscriber code you want to change the due day
         :param new_due_day: The new due day you want to set
-        :return:
+        :return: Empty body, just a status code 200 is successful.
         """
 
         self._log_instance_mode()
+        if self.sandbox:
+            self._sandbox_error_warning()
+
         method = "patch"
         url = f'{self.base_url}/subscriptions/change-due-day'
         payload = {
@@ -474,3 +500,58 @@ class Hotmart:
             "new_due_day": new_due_day
         }
         return self._request_with_token(method=method, url=url, body=payload)
+
+    def create_coupon(self, product_id: str, coupon_code: str, discount: float) -> \
+            Optional[Dict]:
+        """
+        Creates a coupon for a product.
+
+        :param product_id: UID of the product you want to create the coupon for.
+        :param coupon_code: The code of the coupon you want to create.
+        :param discount: The discount you want to apply to the coupon, must be greater than 0 and
+        less than 0.99.
+        :return: Empty body, just a status code 200 is successful.
+        """
+
+        self._log_instance_mode()
+        if self.sandbox:
+            self._sandbox_error_warning()
+
+        method = "post"
+        url = f'{self.base_url}/product/{product_id}/coupon'
+        payload = {
+            "code": coupon_code,
+            "discount": discount
+        }
+        return self._request_with_token(method=method, url=url, body=payload)
+
+    def get_coupon(self, product_id: str) -> Optional[Dict[str, Any]]:
+        """
+        Retrieves a coupon for a product.
+
+        :param product_id: UID of the product you want to retrieve the coupon for.
+        :return: All Coupons for the product.
+        """
+
+        self._log_instance_mode()
+        if self.sandbox:
+            self._sandbox_error_warning()
+
+        method = "get"
+        url = f'{self.base_url}/coupon/product/{product_id}'
+        return self._request_with_token(method=method, url=url)
+
+    def delete_coupon(self, coupon_id):
+        """
+        Deletes a coupon.
+        :param coupon_id:
+        :return: Empty body, just a status code 200 is successful.
+        """
+
+        self._log_instance_mode()
+        if self.sandbox:
+            self._sandbox_error_warning()
+
+        method = "delete"
+        url = f'{self.base_url}/coupon/{coupon_id}'
+        return self._request_with_token(method=method, url=url)
