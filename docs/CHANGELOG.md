@@ -1,7 +1,14 @@
+0.4.0 / 2024-03-21
+==================
+
+* New endpoint added: Discount Coupons
+* Added tests for the new endpoint
+* Added code examples for Sandbox testing
+
 0.3.0 / 2024-03-21
 ==================
 
-* Breaking change: Removed support for python <3.9 due to the use of flake8
+* **Breaking change**: Removed support for python <3.9 due to the use of flake8
   for linting.
 * Added .editorconfig file for better code standardization.
 * Code slightly refactored to comply with flake8.
