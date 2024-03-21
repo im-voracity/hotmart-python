@@ -199,4 +199,5 @@ o [guia de contribuição](CONTRIBUTING.md) (disponível somente em inglês) par
 
 This project is licensed under the Apache License 2.0 - see the [LICENSE](../LICENSE.txt) file for details.
 
-This package is not affiliated with Hotmart. It is an open-source project that is not officially supported by Hotmart.
+Essa biblioteca não tem filiação com a Hotmart. É um projeto de código aberto que não é suportado oficialmente pela
+Hotmart.
