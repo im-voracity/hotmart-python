@@ -29,10 +29,10 @@ jobs:
           virtualenvs-in-project: true
 
       - name: Install dependencies
-        run: poetry install --dev --no-root
+        run: poetry install
 
       - name: Run tests
-        run: poetry run python -m unittest discover -s tests
+        run: python -m unittest discover -s tests
 
       - name: Run flake8
-        run: poetry run flake8
+        run: flake8
