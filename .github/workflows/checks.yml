@@ -2,9 +2,6 @@
 name: Checks
 
 on:
-  push:
-    branches:
-      - master
   pull_request:
     branches:
       - master
@@ -15,12 +12,14 @@ jobs:
     runs-on: ubuntu-20.04
     steps:
       - name: Checkout code
+        id: checkout
         uses: actions/checkout@v2
 
       - name: Setup Python
-        uses: actions/setup-python@v2
+        id: python
+        uses: actions/setup-python@v4
         with:
-          python-version: "3.8.1"
+          python-version: "3.9"
 
       - name: Install Poetry
         uses: snok/install-poetry@v1.3.4
@@ -29,10 +28,18 @@ jobs:
           virtualenvs-in-project: true
 
       - name: Install dependencies
-        run: poetry install
+        id: install
+        run: |
+          poetry install --no-interaction --all-extras
 
       - name: Run tests
-        run: python -m unittest discover -s tests
+        id: tests
+        run: |
+          poetry run python -m unittest discover -s tests
+        if: steps.install.outcome == 'success'
 
       - name: Run flake8
-        run: flake8
+        id: flake8
+        run: |
+          poetry run flake8
+        if: steps.install.outcome == 'success'
