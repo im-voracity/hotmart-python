@@ -17,15 +17,14 @@ This is a Python Wrapper for the Hotmart API, which allows you to interact with 
 ## Features:
 
 - ✅ Authentication
-- ✅ All query parameters are supported
-- ✅ All Sales endpoints
+- ✅ Sales
     - ✅ Sales History
     - ✅ Sales Summary
     - ✅ Sales Users
     - ✅ Sales Commissions
     - ✅ Sales Price Details
 
-- ✅ Subscription endpoints (Not fully implemented yet)
+- ✅ Subscriptions
     - ✅ Get Subscriptions
     - ✅ Subscription Summary
     - ✅ Get subscribers' purchases
