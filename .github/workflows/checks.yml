@@ -1,0 +1,39 @@
+---
+name: Checks
+
+on:
+  push:
+    branches:
+      - master
+  pull_request:
+    branches:
+      - master
+
+jobs:
+  test-lint:
+    name: Test and Lint
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v2
+
+      - name: Setup Python
+        uses: actions/setup-python@v2
+        with:
+          python-version: 3.8.1
+          architecture: x64
+
+      - name: Install Poetry
+        uses: snok/install-poetry@v1.3.4
+        with:
+          virtualenvs-create: true
+          virtualenvs-in-project: true
+
+      - name: Install dependencies
+        run: poetry install --groups dev --no-root
+
+      - name: Run tests
+        run: poetry run python -m unittest discover -s tests
+
+      - name: Run flake8
+        run: poetry run flake8

@@ -1,3 +1,12 @@
+0.3.0 / 2024-03-21
+==================
+
+* Breaking change: Removed support for python <3.8 due to the use of flake8
+  for linting.
+* Added .editorconfig file for better code standardization.
+* Code slightly refactored to comply with flake8.
+* Added GitHub Actions for Testing and Linting.
+
 0.2.2 / 2024-03-21
 ==================
 
@@ -11,7 +20,8 @@
 
 * Added subscriptions endpoint
 * Added tests for subscriptions
-* Changed _get_with_token and _post_with_token methods to use the new _request_with_token for more flexibility
+* Changed _get_with_token and _post_with_token methods to use the new _request_with_token for more
+  flexibility
 * Fixed issue with pagination
 * Updated docs for the new subscriptions endpoint
 * Renamed README.dev.md to CONTRIBUTING.md, for better standardization
