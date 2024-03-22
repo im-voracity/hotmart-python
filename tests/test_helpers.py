@@ -16,17 +16,52 @@ class TestHotmart(unittest.TestCase):
                                basic=basic)
 
     # Build Payload
-    def test_build_payload_with_all_values(self):
-        result = self.hotmart._build_payload(key1='value1', key2='value2')
-        self.assertEqual(result, {'key1': 'value1', 'key2': 'value2'})
 
-    def test_build_payload_with_none_values(self):
-        result = self.hotmart._build_payload(key1='value1', key2=None)
-        self.assertEqual(result, {'key1': 'value1'})
+    def test_build_payload_with_valid_arguments(self):
+        """
+        None values should be ignored
+        """
+        result = self.hotmart._build_payload(buyer_email='test@example.com',
+                                             purchase_value=123,
+                                             is_buyer=True,
+                                             param4=None)
 
-    def test_build_payload_with_no_values(self):
+        # Assert
+        self.assertEqual(result, {
+            "buyer_email": "test@example.com",
+            "purchase_value": 123,
+            "is_buyer": True
+        })
+
+    def test_build_payload_with_no_arguments(self):
         result = self.hotmart._build_payload()
         self.assertEqual(result, {})
+
+    def test_build_url_with_valid_endpoint_payments(self):
+        result = self.hotmart._build_url('payments')
+        expected_result = 'https://developers.hotmart.com/payments/api/v1'
+        self.assertEqual(result, expected_result)
+
+    def test_build_url_with_valid_endpoint_club(self):
+        result = self.hotmart._build_url('club')
+        expected_result = 'https://developers.hotmart.com/club/api/v1'
+        self.assertEqual(result, expected_result)
+
+    def test_build_url_with_valid_endpoint_sandbox_payments(self):
+        self.hotmart.sandbox = True
+        result = self.hotmart._build_url('payments')
+        expected_result = 'https://sandbox.hotmart.com/payments/api/v1'
+        self.assertEqual(result, expected_result)
+
+    def test_build_url_with_valid_endpoint_sandbox_club(self):
+        self.hotmart.sandbox = True
+        result = self.hotmart._build_url('club')
+        expected_result = 'https://sandbox.hotmart.com/club/api/v1'
+        self.assertEqual(result, expected_result)
+
+    def test_build_url_with_invalid_endpoint(self):
+        with self.assertRaises(ValueError):
+            self.hotmart._build_url('invalid_endpoint')
 
     # Sandbox Mode
     def test_sandbox_mode_true(self):

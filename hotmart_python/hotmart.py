@@ -33,10 +33,6 @@ ch.setFormatter(fmt=coloredFormatter)
 logger.addHandler(hdlr=ch)
 logger.setLevel(level=logging.CRITICAL)
 
-# URL Configs
-PRODUCTION_BASE_URL = "https://developers.hotmart.com/payments/api/"
-SANDBOX_BASE_URL = "https://sandbox.hotmart.com/payments/api/"
-
 
 class Hotmart:
     def __init__(self, client_id: str, client_secret: str, basic: str,
@@ -58,8 +54,7 @@ class Hotmart:
         self.secret = client_secret
         self.basic = basic
         self.sandbox = sandbox
-        self.base_url = SANDBOX_BASE_URL if sandbox else PRODUCTION_BASE_URL
-        self.base_url = f'{self.base_url}v{api_version}'
+        self.api_version = api_version
 
         # Token caching and some logic to do better logging.
         self.token_cache = None
@@ -68,12 +63,6 @@ class Hotmart:
 
         self.logger = logging.getLogger(__name__)
         self.logger.setLevel(log_level)
-
-    def _sandbox_error_warning(self):
-        self.logger.warning("At the date of last update for this library"
-                            " the Hotmart Sandbox API does NOT supported this method.")
-        self.logger.warning("This method probably won't work in the Sandbox mode.")
-        return
 
     @staticmethod
     def _build_payload(**kwargs: Any) -> Dict[str, Any]:
@@ -89,6 +78,30 @@ class Hotmart:
             if value is not None:
                 payload[key] = value
         return payload
+
+    def _build_url(self, endpoint_type: str):
+        """
+        Builds the URLs for better dynamic requests.
+        :param endpoint_type: Supported types: payments or club
+        :return:
+        """
+
+        supported_types = ['payments', 'club']
+        if endpoint_type.lower() not in supported_types:
+            raise ValueError(f"Unsupported endpoint type: {endpoint_type}")
+
+        return (f'https://{"sandbox" if self.sandbox else "developers"}.hotmart.com/'
+                f'{endpoint_type.lower()}/api/v{self.api_version}')
+
+    def _sandbox_error_warning(self):
+        """
+        Logs a warning message about the Hotmart Sandbox API not supporting some requests
+        :return:
+        """
+        self.logger.warning("At the date of last update for this library"
+                            " the Hotmart Sandbox API does NOT supported this method.")
+        self.logger.warning("This method probably won't work in the Sandbox mode.")
+        return
 
     def _log_instance_mode(self) -> None:
         """
@@ -268,19 +281,19 @@ class Hotmart:
     def get_sales_history(self, paginate: bool = False, **kwargs: Any) -> Optional[Dict[str, Any]]:
         """
         Retrieves sales history data based on the provided filters.
-
         :param kwargs: Filters to apply on the request. Expected kwargs can be found in
         the "Request parameters" section of the API Docs.
         :param paginate: Whether to paginate the results or not (default is False).
         :return: Sales history data if available, otherwise None.
         """
+
         self._log_instance_mode()
 
         method = "get"
-        url = f'{self.base_url}/sales/history'
+        base_url = self._build_url('payments')
+        url = f'{base_url}/sales/history'
         payload = self._build_payload(**kwargs)
-        return self._pagination(method=method, url=url, params=payload,
-                                paginate=paginate)
+        return self._pagination(method=method, url=url, params=payload, paginate=paginate)
 
     def get_sales_summary(self, paginate: bool = False, **kwargs: Any) -> Optional[Dict[str, Any]]:
         """
@@ -295,7 +308,8 @@ class Hotmart:
         self._log_instance_mode()
 
         method = "get"
-        url = f'{self.base_url}/sales/summary'
+        base_url = self._build_url('payments')
+        url = f'{base_url}/sales/summary'
         payload = self._build_payload(**kwargs)
         return self._pagination(method=method, url=url, params=payload,
                                 paginate=paginate)
@@ -314,7 +328,8 @@ class Hotmart:
         self._log_instance_mode()
 
         method = "get"
-        url = f'{self.base_url}/sales/users'
+        base_url = self._build_url('payments')
+        url = f'{base_url}/sales/users'
         payload = self._build_payload(**kwargs)
         return self._pagination(method=method, url=url, params=payload, paginate=paginate)
 
@@ -332,7 +347,8 @@ class Hotmart:
         self._log_instance_mode()
 
         method = "get"
-        url = f'{self.base_url}/sales/commissions'
+        base_url = self._build_url('payments')
+        url = f'{base_url}/sales/commissions'
         payload = self._build_payload(**kwargs)
         return self._pagination(method=method, url=url, params=payload, paginate=paginate)
 
@@ -350,7 +366,8 @@ class Hotmart:
         self._log_instance_mode()
 
         method = "get"
-        url = f'{self.base_url}/sales/price/details'
+        base_url = self._build_url('payments')
+        url = f'{base_url}/sales/price/details'
         payload = self._build_payload(**kwargs)
         return self._pagination(method=method, url=url, params=payload, paginate=paginate)
 
@@ -368,7 +385,8 @@ class Hotmart:
         self._log_instance_mode()
 
         method = "get"
-        url = f'{self.base_url}/subscriptions'
+        base_url = self._build_url('payments')
+        url = f'{base_url}/subscriptions'
         payload = self._build_payload(**kwargs)
         return self._pagination(method=method, url=url, params=payload, paginate=paginate)
 
@@ -385,7 +403,8 @@ class Hotmart:
         self._log_instance_mode()
 
         method = "get"
-        url = f'{self.base_url}/subscriptions/summary'
+        base_url = self._build_url('payments')
+        url = f'{base_url}/subscriptions/summary'
         payload = self._build_payload(**kwargs)
         return self._pagination(method=method, url=url, params=payload, paginate=paginate)
 
@@ -406,7 +425,8 @@ class Hotmart:
             self._sandbox_error_warning()
 
         method = "get"
-        url = f'{self.base_url}/subscriptions/{subscriber_code}/purchases'
+        base_url = self._build_url('payments')
+        url = f'{base_url}/subscriptions/{subscriber_code}/purchases'
         payload = self._build_payload(**kwargs)
         return self._pagination(method=method, url=url, params=payload, paginate=paginate)
 
@@ -425,7 +445,8 @@ class Hotmart:
             self._sandbox_error_warning()
 
         method = "post"
-        url = f'{self.base_url}/subscriptions/cancel'
+        base_url = self._build_url('payments')
+        url = f'{base_url}/subscriptions/cancel'
         payload = {
             "subscriber_code": subscriber_code,
             "send_email": send_email
@@ -448,7 +469,8 @@ class Hotmart:
             self._sandbox_error_warning()
 
         method = "post"
-        url = f'{self.base_url}/subscriptions/reactivate'
+        base_url = self._build_url('payments')
+        url = f'{base_url}/subscriptions/reactivate'
         payload = {
             "subscriber_code": subscriber_code,
             "charge": charge
@@ -469,7 +491,8 @@ class Hotmart:
             self._sandbox_error_warning()
 
         method = "patch"
-        url = f'{self.base_url}/subscriptions/change-due-day'
+        base_url = self._build_url('payments')
+        url = f'{base_url}/subscriptions/change-due-day'
         payload = {
             "subscriber_code": subscriber_code,
             "new_due_day": new_due_day
@@ -493,7 +516,8 @@ class Hotmart:
             self._sandbox_error_warning()
 
         method = "post"
-        url = f'{self.base_url}/product/{product_id}/coupon'
+        base_url = self._build_url('payments')
+        url = f'{base_url}/product/{product_id}/coupon'
         payload = {
             "code": coupon_code,
             "discount": discount
@@ -513,7 +537,8 @@ class Hotmart:
             self._sandbox_error_warning()
 
         method = "get"
-        url = f'{self.base_url}/coupon/product/{product_id}'
+        base_url = self._build_url('payments')
+        url = f'{base_url}/coupon/product/{product_id}'
         return self._request_with_token(method=method, url=url)
 
     def delete_coupon(self, coupon_id):
@@ -528,5 +553,6 @@ class Hotmart:
             self._sandbox_error_warning()
 
         method = "delete"
-        url = f'{self.base_url}/coupon/{coupon_id}'
+        base_url = self._build_url('payments')
+        url = f'{base_url}/coupon/{coupon_id}'
         return self._request_with_token(method=method, url=url)
