@@ -146,26 +146,26 @@ class Hotmart:
                 return response.json()
             response.raise_for_status()
 
-        except requests.exceptions.HTTPError as HTTPError:
+        except requests.exceptions.HTTPError as e:
             # noinspection PyUnboundLocalVariable
-            if response.status_code == 401 or response.status_code == 403:
+            if e.response.status_code == 401 or e.response.status_code == 403:
                 if self.sandbox:
                     self.logger.error("Perhaps the credentials aren't for Sandbox Mode?")
                 else:
                     self.logger.error("Perhaps the credentials are for Sandbox Mode?")
-                raise HTTPError
+                raise e
 
-            if response.status_code == 422:
-                self.logger.error(f"Error {response.status_code}")
+            if e.response.status_code == 422:
+                self.logger.error(f"Error {e.response.status_code}")
                 self.logger.error("This usually happens when the request is missing"
                                   " body parameters.")
-                raise HTTPError
+                raise e
 
-            if response.status_code == 500 and self.sandbox:
+            if e.response.status_code == 500 and self.sandbox:
                 self.logger.error("This happens with some endpoints in the Sandbox Mode.")
                 self.logger.error("Usually the API it's not down, it's just a bug.")
 
-            raise HTTPError
+            raise e
 
     def _is_token_expired(self) -> bool:
         """

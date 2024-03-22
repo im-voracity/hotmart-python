@@ -1,5 +1,8 @@
+import logging
+
 import requests
 import unittest
+from unittest.mock import Mock, MagicMock
 from unittest.mock import patch
 from hotmart_python import Hotmart
 
@@ -15,8 +18,6 @@ class TestHotmart(unittest.TestCase):
                                client_secret=client_secret,
                                basic=basic)
 
-    # Build Payload
-
     def test_build_payload_with_valid_arguments(self):
         """
         None values should be ignored
@@ -26,7 +27,6 @@ class TestHotmart(unittest.TestCase):
                                              is_buyer=True,
                                              param4=None)
 
-        # Assert
         self.assertEqual(result, {
             "buyer_email": "test@example.com",
             "purchase_value": 123,
@@ -34,6 +34,9 @@ class TestHotmart(unittest.TestCase):
         })
 
     def test_build_payload_with_no_arguments(self):
+        """
+        No arguments should return an empty dictionary
+        """
         result = self.hotmart._build_payload()
         self.assertEqual(result, {})
 
@@ -65,59 +68,137 @@ class TestHotmart(unittest.TestCase):
 
     # Sandbox Mode
     def test_sandbox_mode_true(self):
-        hotmart = Hotmart(client_id='123', client_secret='123', basic='123',
-                          sandbox=True)
-        self.assertTrue(hotmart.sandbox)
+        self.hotmart.sandbox = True
+        self.assertTrue(self.hotmart.sandbox)
 
     def test_sandbox_mode_false(self):
-        hotmart1 = Hotmart(client_id='123', client_secret='123', basic='123')
-        hotmart2 = Hotmart(client_id='123', client_secret='123', basic='123',
-                           sandbox=False)
-
-        self.assertFalse(hotmart1.sandbox)
-        self.assertFalse(hotmart2.sandbox)
+        self.assertFalse(self.hotmart.sandbox)
 
     @patch('requests.get')
-    def test_successful_request(self, mock_get):
-        mock_get.return_value.status_code = 200
-        mock_get.return_value.json.return_value = {"success": True}
-        response = self.hotmart._make_request(requests.get,
-                                              'https://example.com')
-        self.assertEqual(response, {"success": True})
+    def test_make_request_successful(self, mock_get):
+        mock_response = Mock()
+        mock_response.status_code = 200
+        mock_response.text = '{"items":[{"some":"info"}]}'
+        mock_response.json.return_value = {
+            "items": [{
+                "some": "info"
+            }]
+        }
+        mock_get.return_value = mock_response
+        result = self.hotmart._make_request(requests.get, 'https://developers.hotmart.com/'
+                                                          'payments/api/v1/sales/history')
 
-    @patch('requests.get')
-    def test_http_error_request(self, mock_get):
-        mock_get.return_value.raise_for_status.side_effect = (
-            requests.exceptions.HTTPError)
+        self.assertEqual(result, {
+            "items": [{
+                "some": "info"
+            }]
+        })
 
-        with self.assertRaises(requests.exceptions.HTTPError):
-            self.hotmart._make_request(requests.get, 'https://example.com')
+    def test_http_error_403_make_request(self):
+        """
+        Checks if the exception is raised and a log hint it's logged.
+        :return:
+        """
+        method_mock = MagicMock()
+        url = 'https://developers.hotmart.com/payments/api/v1/sales/history'
+        headers = {
+            'Authorization': basic,
+            'Content-Type': 'application/json'
+        }
+        params = {
+            'buyer_email': 'buyer@example.com'
+        }
+        body = {
+            'subdomain': 'my_subdomain'
+        }
+        method_mock.side_effect = requests.exceptions.HTTPError(response=MagicMock(status_code=403))
 
-    @patch('requests.get')
-    def test_request_exception(self, mock_get):
-        mock_get.side_effect = requests.exceptions.RequestException
-        with self.assertRaises(requests.exceptions.RequestException):
-            self.hotmart._make_request(requests.get, 'https://example.com')
+        with self.assertRaises(requests.exceptions.HTTPError) as e:
+            with patch.object(self.hotmart, 'logger') as mock_logger:
+                self.hotmart._make_request(method_mock, url, headers, params, body)
 
-    @patch('requests.get')
-    def test_forbidden_request_in_sandbox_mode(self, mock_get):
+        self.assertEqual(e.exception.response.status_code, 403)
+        mock_logger.error.assert_called_with('Perhaps the credentials are for Sandbox Mode?')
+
+    def test_http_error_422_make_request(self):
+        """
+        Checks if the exception is raised and a log hint it's logged.
+        :return:
+        """
+        method_mock = MagicMock()
+        url = 'https://developers.hotmart.com/payments/api/v1/sales/history'
+        headers = {
+            'Authorization': basic,
+            'Content-Type': 'application/json'
+        }
+        params = {
+            'buyer_email': 'buyer@example.com'
+        }
+        body = {
+            'subdomain': 'my_subdomain'
+        }
+        method_mock.side_effect = requests.exceptions.HTTPError(response=MagicMock(status_code=422))
+
+        with self.assertRaises(requests.exceptions.HTTPError) as e:
+            with patch.object(self.hotmart, 'logger') as mock_logger:
+                self.hotmart._make_request(method_mock, url, headers, params, body)
+
+        self.assertEqual(e.exception.response.status_code, 422)
+        mock_logger.error.assert_called_with("This usually happens when the request is missing"
+                                             " body parameters.")
+
+    def test_http_error_500_make_request(self):
+        """
+        Checks if the exception is raised and a log hint it's logged.
+        :return:
+        """
         self.hotmart.sandbox = True
-        mock_get.return_value.status_code = 403
-        mock_get.return_value.raise_for_status.side_effect = (
-            requests.exceptions.HTTPError)
+        method_mock = MagicMock()
+        url = 'https://developers.hotmart.com/payments/api/v1/sales/history'
+        headers = {
+            'Authorization': basic,
+            'Content-Type': 'application/json'
+        }
+        params = {
+            'buyer_email': 'buyer@example.com'
+        }
+        body = {
+            'subdomain': 'my_subdomain'
+        }
+        method_mock.side_effect = requests.exceptions.HTTPError(response=MagicMock(status_code=500))
 
-        with self.assertRaises(requests.exceptions.HTTPError):
-            self.hotmart._make_request(requests.get, 'https://example.com')
+        with self.assertRaises(requests.exceptions.HTTPError) as e:
+            with patch.object(self.hotmart, 'logger') as mock_logger:
+                self.hotmart._make_request(method_mock, url, headers, params, body)
 
-    @patch('requests.get')
-    def test_forbidden_request_in_production_mode(self, mock_get):
-        self.hotmart.sandbox = False
-        mock_get.return_value.status_code = 403
-        mock_get.return_value.raise_for_status.side_effect = (
-            requests.exceptions.HTTPError)
+        self.assertEqual(e.exception.response.status_code, 500)
+        mock_logger.error.assert_any_call('This happens with some endpoints in the Sandbox Mode.')
+        mock_logger.error.assert_any_call('Usually the API it\'s not down, it\'s just a bug.')
 
-        with self.assertRaises(requests.exceptions.HTTPError):
-            self.hotmart._make_request(requests.get, 'https://example.com')
+    def test_http_general_error_make_request(self):
+        """
+        Checks if the exception is raised when errors are different from 401, 403, 422 or 500.
+        :return:
+        """
+        method_mock = MagicMock()
+        url = 'https://developers.hotmart.com/payments/api/v1/sales/history'
+        headers = {
+            'Authorization': basic,
+            'Content-Type': 'application/json'
+        }
+        params = {
+            'buyer_email': 'buyer@example.com'
+        }
+        body = {
+            'subdomain': 'my_subdomain'
+        }
+        method_mock.side_effect = requests.exceptions.HTTPError(response=MagicMock(status_code=418))
+
+        with self.assertRaises(requests.exceptions.HTTPError) as e:
+            self.hotmart._make_request(method_mock, url, headers, params, body)
+
+        self.assertEqual(e.exception.response.status_code, 418)
+        self.assertRaises(requests.exceptions.HTTPError)
 
     @patch('time.time')
     def test_token_expired_when_expiry_in_past(self, mock_time):
@@ -147,11 +228,12 @@ class TestHotmart(unittest.TestCase):
 
     @patch.object(Hotmart, '_is_token_expired')
     @patch.object(Hotmart, '_fetch_new_token')
-    def test_token_found_in_cache(self, mock_fetch_new_token,
-                                  mock_is_token_expired):
+    def test_token_found_in_cache(self, mock_fetch_new_token, mock_is_token_expired):
+
         mock_is_token_expired.return_value = False
         self.hotmart.token_cache = 'test_token'
         token = self.hotmart._get_token()
+
         self.assertEqual(token, 'test_token')
         mock_fetch_new_token.assert_not_called()
 
@@ -160,6 +242,7 @@ class TestHotmart(unittest.TestCase):
     def test_token_not_in_cache_and_fetched_success(self,
                                                     mock_fetch_new_token,
                                                     mock_is_token_expired):
+
         mock_is_token_expired.return_value = True
         mock_fetch_new_token.return_value = 'new_token'
         token = self.hotmart._get_token()
@@ -168,6 +251,7 @@ class TestHotmart(unittest.TestCase):
     @patch.object(Hotmart, '_is_token_expired')
     @patch.object(Hotmart, '_fetch_new_token')
     def test_token_not_in_cache_and_fetch_failed(self, mock_fetch_new_token, mock_is_token_expired):
+
         mock_is_token_expired.return_value = True
         mock_fetch_new_token.return_value = None
         token = self.hotmart._get_token()
@@ -176,6 +260,7 @@ class TestHotmart(unittest.TestCase):
     @patch.object(Hotmart, '_get_token')
     @patch.object(Hotmart, '_make_request')
     def test_successful_request_with_token(self, mock_make_request, mock_get_token):
+
         mock_get_token.return_value = 'test_token'
         mock_make_request.return_value = {"success": True}
         result = self.hotmart._request_with_token('GET', 'https://example.com')
@@ -183,23 +268,23 @@ class TestHotmart(unittest.TestCase):
 
     @patch.object(Hotmart, '_get_token')
     @patch.object(Hotmart, '_make_request')
-    def test_failed_request_with_token(self, mock_make_request,
-                                       mock_get_token):
+    def test_failed_request_with_token(self, mock_make_request, mock_get_token):
+
         mock_get_token.return_value = 'test_token'
         mock_make_request.side_effect = requests.exceptions.RequestException
         with self.assertRaises(requests.exceptions.RequestException):
             self.hotmart._request_with_token('GET', 'https://example.com')
 
     @patch.object(Hotmart, '_get_token')
-    def test_unsupported_method_with_token(self,
-                                           mock_get_token):
+    def test_unsupported_method_with_token(self, mock_get_token):
+
         mock_get_token.return_value = 'test_token'
         with self.assertRaises(ValueError):
-            self.hotmart._request_with_token('PUT',
-                                             'https://example.com')
+            self.hotmart._request_with_token('PUT', 'https://example.com')
 
     @patch.object(Hotmart, '_request_with_token')
     def test_pagination_without_pagination(self, mock_request_with_token):
+
         mock_request_with_token.return_value = {
             "items": ["item1", "item2"]
         }
@@ -210,6 +295,7 @@ class TestHotmart(unittest.TestCase):
 
     @patch.object(Hotmart, '_request_with_token')
     def test_pagination_with_single_page(self, mock_request_with_token):
+
         mock_request_with_token.return_value = {
             "items": ["item1", "item2"],
             "page_info": {}
@@ -223,6 +309,7 @@ class TestHotmart(unittest.TestCase):
 
     @patch.object(Hotmart, '_request_with_token')
     def test_pagination_with_multiple_pages(self, mock_request_with_token):
+
         mock_request_with_token.side_effect = [
             {
                 "items": ["item1", "item2"],
