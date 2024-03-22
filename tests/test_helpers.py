@@ -1,7 +1,7 @@
 import requests
 import unittest
 from unittest.mock import patch
-from hotmart_python import Hotmart, RequestException, HTTPRequestException
+from hotmart_python import Hotmart
 
 client_id = 'b32450c1-1352-246a-b6d3-d49d6db815ea'
 client_secret = '90bcc221-cebd-5a5b-00e2-72cab47d9282'
@@ -55,13 +55,13 @@ class TestHotmart(unittest.TestCase):
         mock_get.return_value.raise_for_status.side_effect = (
             requests.exceptions.HTTPError)
 
-        with self.assertRaises(HTTPRequestException):
+        with self.assertRaises(requests.exceptions.HTTPError):
             self.hotmart._make_request(requests.get, 'https://example.com')
 
     @patch('requests.get')
     def test_request_exception(self, mock_get):
         mock_get.side_effect = requests.exceptions.RequestException
-        with self.assertRaises(RequestException):
+        with self.assertRaises(requests.exceptions.RequestException):
             self.hotmart._make_request(requests.get, 'https://example.com')
 
     @patch('requests.get')
@@ -71,7 +71,7 @@ class TestHotmart(unittest.TestCase):
         mock_get.return_value.raise_for_status.side_effect = (
             requests.exceptions.HTTPError)
 
-        with self.assertRaises(HTTPRequestException):
+        with self.assertRaises(requests.exceptions.HTTPError):
             self.hotmart._make_request(requests.get, 'https://example.com')
 
     @patch('requests.get')
@@ -81,7 +81,7 @@ class TestHotmart(unittest.TestCase):
         mock_get.return_value.raise_for_status.side_effect = (
             requests.exceptions.HTTPError)
 
-        with self.assertRaises(HTTPRequestException):
+        with self.assertRaises(requests.exceptions.HTTPError):
             self.hotmart._make_request(requests.get, 'https://example.com')
 
     @patch('time.time')
@@ -96,17 +96,18 @@ class TestHotmart(unittest.TestCase):
         self.hotmart.token_expires_at = 101
         self.assertFalse(self.hotmart._is_token_expired())
 
-    @patch('requests.post')
-    def test_token_obtained_successfully(self, mock_post):
-        mock_post.return_value.json.return_value = {
-            'access_token': 'test_token'}
+    @patch.object(Hotmart, '_make_request')
+    def test_token_obtained_successfully(self, mock_make_request):
+        mock_make_request.return_value = {
+            'access_token': 'test_token'
+        }
         token = self.hotmart._fetch_new_token()
         self.assertEqual(token, 'test_token')
 
     @patch('requests.post')
     def test_token_obtained_failure(self, mock_post):
         mock_post.side_effect = requests.exceptions.RequestException
-        with self.assertRaises(RequestException):
+        with self.assertRaises(requests.exceptions.RequestException):
             self.hotmart._fetch_new_token()
 
     @patch.object(Hotmart, '_is_token_expired')
@@ -131,8 +132,7 @@ class TestHotmart(unittest.TestCase):
 
     @patch.object(Hotmart, '_is_token_expired')
     @patch.object(Hotmart, '_fetch_new_token')
-    def test_token_not_in_cache_and_fetch_failed(self, mock_fetch_new_token,
-                                                 mock_is_token_expired):
+    def test_token_not_in_cache_and_fetch_failed(self, mock_fetch_new_token, mock_is_token_expired):
         mock_is_token_expired.return_value = True
         mock_fetch_new_token.return_value = None
         token = self.hotmart._get_token()
@@ -140,12 +140,10 @@ class TestHotmart(unittest.TestCase):
 
     @patch.object(Hotmart, '_get_token')
     @patch.object(Hotmart, '_make_request')
-    def test_successful_request_with_token(self, mock_make_request,
-                                           mock_get_token):
+    def test_successful_request_with_token(self, mock_make_request, mock_get_token):
         mock_get_token.return_value = 'test_token'
         mock_make_request.return_value = {"success": True}
-        result = self.hotmart._request_with_token('GET',
-                                                  'https://example.com')
+        result = self.hotmart._request_with_token('GET', 'https://example.com')
         self.assertEqual(result, {"success": True})
 
     @patch.object(Hotmart, '_get_token')
@@ -153,11 +151,9 @@ class TestHotmart(unittest.TestCase):
     def test_failed_request_with_token(self, mock_make_request,
                                        mock_get_token):
         mock_get_token.return_value = 'test_token'
-        mock_make_request.side_effect = RequestException("Error",
-                                                         "url")
-        with self.assertRaises(RequestException):
-            self.hotmart._request_with_token('GET',
-                                             'https://example.com')
+        mock_make_request.side_effect = requests.exceptions.RequestException
+        with self.assertRaises(requests.exceptions.RequestException):
+            self.hotmart._request_with_token('GET', 'https://example.com')
 
     @patch.object(Hotmart, '_get_token')
     def test_unsupported_method_with_token(self,

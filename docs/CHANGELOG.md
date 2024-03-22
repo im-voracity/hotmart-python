@@ -1,3 +1,10 @@
+0.4.1 / 2024-03-22
+==================
+
+* Better error handling for _make_request.
+* Removed custom exceptions.
+* Changed tests to better fit exceptions changes.
+
 0.4.0 / 2024-03-21
 ==================
 

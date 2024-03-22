@@ -33,29 +33,6 @@ ch.setFormatter(fmt=coloredFormatter)
 logger.addHandler(hdlr=ch)
 logger.setLevel(level=logging.CRITICAL)
 
-
-class HTTPRequestException(Exception):
-    def __init__(self, message, status_code, url, response_body=None):
-        super().__init__(message)
-        self.status_code = status_code
-        self.url = url
-        self.response_body = response_body
-
-    def __str__(self):
-        return (f"HTTPRequestException: {self.args[0]}, "
-                f"Status Code: {self.status_code}, "
-                f"URL: {self.url}, Response Body: {self.response_body}")
-
-
-class RequestException(Exception):
-    def __init__(self, message, url):
-        super().__init__(message)
-        self.url = url
-
-    def __str__(self):
-        return f"RequestException: {self.args[0]}, URL: {self.url}"
-
-
 # URL Configs
 PRODUCTION_BASE_URL = "https://developers.hotmart.com/payments/api/"
 SANDBOX_BASE_URL = "https://sandbox.hotmart.com/payments/api/"
@@ -121,7 +98,9 @@ class Hotmart:
         return self.logger.warning(
             f"Instance in {'Sandbox' if self.sandbox else 'Production'} mode")
 
-    def _make_request(self, method: Any, url: str,
+    def _make_request(self,
+                      method: Any,
+                      url: str,
                       headers: Optional[Dict[str, str]] = None,
                       params: Optional[Dict[str, Any]] = None,
                       body: Optional[Dict[str, str]] = None,
@@ -141,43 +120,39 @@ class Hotmart:
         if log_level is not None:
             logger = logging.getLogger(__name__)  # noqa
             logger.setLevel(log_level)
-        try:
-            self.logger.debug(f"Request URL: {url}")
-            self.logger.debug(f"Request headers: {headers}")
-            self.logger.debug(f"Request params: {params}")
-            self.logger.debug(f"Request body: {body}")
 
+        self.logger.debug(f"Request URL: {url}")
+        self.logger.debug(f"Request headers: {headers}")
+        self.logger.debug(f"Request params: {params}")
+        self.logger.debug(f"Request body: {body}")
+
+        try:
             response = method(url, headers=headers, params=params, data=body)
             self.logger.debug(f"Response content: {response.text}")
+            if response.status_code == requests.codes.ok:
+                return response.json()
             response.raise_for_status()
-            return response.json()
 
-        except requests.exceptions.HTTPError:
+        except requests.exceptions.HTTPError as HTTPError:
             # noinspection PyUnboundLocalVariable
-            if response.status_code != 403:
-                raise HTTPRequestException("HTTP Error",
-                                           response.status_code,
-                                           url,
-                                           body)
-            error_message = "Forbidden."
-            self.logger.error(f"Error {response.status_code}: {error_message}")
-            if self.sandbox:
-                self.logger.error(
-                    "Check if the provided credentials are for Sandbox mode.")
+            if response.status_code == 401 or response.status_code == 403:
+                if self.sandbox:
+                    self.logger.error("Perhaps the credentials aren't for Sandbox Mode?")
+                else:
+                    self.logger.error("Perhaps the credentials aren't for Sandbox Mode?")
+                raise HTTPError
 
-            self.logger.error(
-                "Perhaps the provided credentials are for Sandbox mode?")
-            raise HTTPRequestException(error_message, response.status_code,
-                                       url, body)
+            if response.status_code == 422:
+                self.logger.error(f"Error {response.status_code}")
+                self.logger.error("This usually happens when the request is missing"
+                                  " body parameters.")
+                raise HTTPError
 
-        except requests.exceptions.RequestException as e:
-            error_message = str(e) if str(
-                e) else "An error occurred while making the request"
-            self.logger.error(
-                f"Error making request to {url}: {error_message}")
-            raise RequestException(
-                f"Error making request to {url}: {error_message}",
-                url)
+            if response.status_code == 500 and self.sandbox:
+                self.logger.error("This happens with some endpoints in the Sandbox Mode.")
+                self.logger.error("Usually the API it's not down, it's just a bug.")
+
+            raise HTTPError
 
     def _is_token_expired(self) -> bool:
         """
@@ -414,7 +389,7 @@ class Hotmart:
         payload = self._build_payload(**kwargs)
         return self._pagination(method=method, url=url, params=payload, paginate=paginate)
 
-    def get_subscription_purchases(self, subscriber_code, paginate: bool = False, **kwargs: Any) ->\
+    def get_subscription_purchases(self, subscriber_code, paginate: bool = False, **kwargs: Any) -> \
             Optional[Dict[str, Any]]:
         """
         Retrieves subscription purchases data based on the provided filters.
@@ -435,7 +410,7 @@ class Hotmart:
         payload = self._build_payload(**kwargs)
         return self._pagination(method=method, url=url, params=payload, paginate=paginate)
 
-    def cancel_subscription(self, subscriber_code: list[str], send_email: bool = True) ->\
+    def cancel_subscription(self, subscriber_code: list[str], send_email: bool = True) -> \
             Optional[Dict[str, Any]]:
         """
         Cancels a subscription.
@@ -457,7 +432,7 @@ class Hotmart:
         }
         return self._request_with_token(method=method, url=url, body=payload)
 
-    def reactivate_and_charge_subscription(self, subscriber_code: list[str], charge: bool = False)\
+    def reactivate_and_charge_subscription(self, subscriber_code: list[str], charge: bool = False) \
             -> Optional[Dict[str, Any]]:
         """
         Reactivates and charges a subscription.

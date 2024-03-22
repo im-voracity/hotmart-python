@@ -1,1 +1,1 @@
-from .hotmart import Hotmart, HTTPRequestException, RequestException
+from .hotmart import Hotmart
