@@ -139,7 +139,7 @@ class Hotmart:
                 if self.sandbox:
                     self.logger.error("Perhaps the credentials aren't for Sandbox Mode?")
                 else:
-                    self.logger.error("Perhaps the credentials aren't for Sandbox Mode?")
+                    self.logger.error("Perhaps the credentials are for Sandbox Mode?")
                 raise HTTPError
 
             if response.status_code == 422:
