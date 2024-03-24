@@ -4,7 +4,7 @@ import logging
 import time
 import sys
 
-from typing import List, Dict, Any, Optional
+from typing import List, Dict, Any, Optional, Tuple
 
 Response = List[Dict[str, Any]]
 
@@ -82,7 +82,7 @@ class Hotmart:
         return payload
 
     @staticmethod
-    def _handle_response(response: Dict[str, Any] | List[Dict[str, Any]],
+    def _handle_response(response: Tuple[Dict[str, Any], List[Dict[str, Any]]],
                          enhance=True) -> Response:
         """
         Standardizes the output of the response to always be a list of dictionaries.
