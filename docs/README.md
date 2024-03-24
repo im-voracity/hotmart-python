@@ -10,6 +10,11 @@ the platform:
 - [Features](#features)
 - [Installation](#installation)
 - [Usage](#usage)
+    - [Usage example 1](#usage-example-1)
+    - [Logs](#logs)
+    - [Sandbox](#sandbox)
+    - [Usage example 2](#usage-example-2)
+    - [Pagination](#pagination)
 - [Supported Parameters](#supported-parameters)
 - [API Reference](#api-reference)
 - [Contributing](#contributing)
@@ -18,6 +23,7 @@ the platform:
 ## Features:
 
 - ✅ Authentication
+- ✅ Pagination
 - ✅ All sales endpoints
 - ✅ All subscriptions endpoints
 - ✅ All coupons endpoints
@@ -29,6 +35,8 @@ pip install hotmart-python
 ```
 
 ## Usage
+
+### Usage example 1:
 
 Here's how you can use the Hotmart Python Wrapper in your Python code:
 
@@ -45,13 +53,14 @@ sales_history = hotmart.get_sales_history()
 print(sales_history)
 ```
 
+### Logs:
+
 By default, logging is disabled. You can enable it and set the log level by passing the `log_level`
-parameter when
-initializing the Hotmart object. The available log levels are:
+parameter when initializing the Hotmart object. The available log levels are:
 
 - ️️☣️ `logging.DEBUG`: Debug level logging, which includes detailed information such as request
-  URLs and parameters (*
-  *not recommended for production use due to sensitive information being logged**).
+  URLs and parameters
+  (**not recommended for production use due to sensitive information being logged**).
 - `logging.INFO`: Information level logging, which provides basic information about the operations
   being performed.
 - `logging.WARNING`: Warning level logging, which indicates potential issues or unexpected behavior.
@@ -70,9 +79,14 @@ hotmart = Hotmart(client_id='your_client_id',
                   log_level=logging.INFO)
 ```
 
-You can also use the `sandbox` parameter to enable the sandbox environment. By default, the sandbox
-environment is
-disabled.
+The parameter log_level can be omitted, and if done, it will fall back to the default log level,
+which is `logging.WARNING`.
+
+### Sandbox:
+
+It is also possible to use the `sandbox` parameter to enable the sandbox environment, which can only
+be accessed if previously generated credentials targeting sandbox mode are generated inside Hotmart.
+By default, e sandbox environment is disabled.
 
 ```python
 import logging
@@ -86,7 +100,10 @@ hotmart = Hotmart(client_id='your_sandbox_client_id',
                   sandbox=True)
 ```
 
-Usage example for getting sales history with logging enabled and log level set to INFO:
+### Usage example 2:
+
+Usage example for getting sales history with logging enabled and log level set to INFO and using
+query filters to get sales by buyer email:
 
 ```python
 from hotmart_python import Hotmart
@@ -103,13 +120,48 @@ sales_history = hotmart.get_sales_history(buyer_email='johndoe@example.com')
 print(sales_history)
 ```
 
+### Pagination:
+
+By default, pagination is disabled. If you want to enable pagination, you can use de `paginate`
+decorator, there are two ways of doing it.
+
+The first one (and simplest) is to use the decorator in a wrapper function
+
+```python
+from hotmart_python import Hotmart
+from hotmart_python.decorators import paginate
+
+hotmart = Hotmart(client_id='your_client_id',
+                  client_secret='your_client_secret',
+                  basic='your_basic')
+
+
+@paginate
+def get_sales_history(*args, **kwargs):
+    return hotmart.get_sales_history(*args, **kwargs)
+
+
+print(get_sales_history())
+```
+
+The second one, it's a one-liner lambda function
+
+```python
+from hotmart_python import Hotmart
+from hotmart_python.decorators import paginate
+
+hotmart = Hotmart(client_id='your_client_id',
+                  client_secret='your_client_secret',
+                  basic='your_basic')
+
+get_sales_history = paginate(lambda *args, **kwargs: hotmart.get_sales_history(*args, **kwargs))
+print(get_sales_history())
+```
+
 ## Supported Parameters
 
 These are the supported parameters for all methods that interact with the Hotmart API:
 
-- `paginate` (bool): Whether to paginate the results or not (default is False). When set to True,
-  the method will fetch
-  all pages of data for a paginated endpoint.
 - `kwargs`: Any queries that are supported by the endpoint. For example, the `get_sales_history`
   method supports the
   following parameters:

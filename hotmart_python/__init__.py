@@ -1,1 +1,2 @@
-from .hotmart import Hotmart, HTTPRequestException, RequestException
+from .hotmart import Hotmart
+from .decorators import paginate
