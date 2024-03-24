@@ -149,8 +149,8 @@ class Hotmart:
                       url: str,
                       headers: Optional[Dict[str, str]] = None,
                       params: Optional[Dict[str, Any]] = None,
-                      body: Optional[Dict[str, str]] = None,
-                      log_level: Optional[int] = None) -> Dict[str, Any] | List[Dict[str, Any]]:
+                      body: Optional[Dict[str, str]] = None, log_level: Optional[int] = None) -> \
+            List[Dict[str, Any]]:
         """
         Makes a request to the given url.
         :param method: The request method (e.g, requests.get, requests.post).
