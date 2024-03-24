@@ -1,6 +1,5 @@
 import unittest
 
-from typing import List
 from unittest.mock import Mock
 from hotmart_python.decorators import paginate
 

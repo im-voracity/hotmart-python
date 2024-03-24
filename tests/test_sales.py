@@ -56,7 +56,8 @@ class TestSales(unittest.TestCase):
                                                     params={
                                                         'buyer_name': 'Paula',
                                                         'payment_type': 'BILLET'
-                                                    })
+                                                    },
+                                                    enhance=True)
 
     @patch.object(Hotmart, '_request_with_token')
     def test_get_sales_participants(self, mock_req_with_token):
@@ -77,7 +78,8 @@ class TestSales(unittest.TestCase):
                                                     params={
                                                         'buyer_name': 'Paula',
                                                         'transaction_status': 'APPROVED'
-                                                    })
+                                                    },
+                                                    enhance=True)
 
     @patch.object(Hotmart, '_request_with_token')
     def test_get_sales_commissions(self, mock_req_with_token):
@@ -98,7 +100,8 @@ class TestSales(unittest.TestCase):
                                                     params={
                                                         'commission_as': 'PRODUCER',
                                                         'transaction_status': 'APPROVED'
-                                                    })
+                                                    },
+                                                    enhance=True)
 
     @patch.object(Hotmart, '_request_with_token')
     def test_get_sales_price_details(self, mock_req_with_token):
@@ -120,4 +123,5 @@ class TestSales(unittest.TestCase):
                                                     params={
                                                         'payment_type': 'CREDIT_CARD',
                                                         'transaction_status': 'APPROVED'
-                                                    })
+                                                    },
+                                                    enhance=True)

@@ -37,25 +37,21 @@ logger.setLevel(logging.DEBUG)
 def paginate(func: Callable[..., List[Dict[str, Any]]]) -> Callable[..., List[Dict[str, Any]]]:
     def wrapper(*args: Any, **kwargs: Any) -> List[Dict[str, Any]]:
         items = []
-        response: List = func(*args, **kwargs)
-
-        logger.debug(type(response))
+        response: List = func(*args, **kwargs, enhance=False)
 
         try:
             items.extend(response[0]["items"])
 
             while 'page_info' in response[0] and 'next_page_token' in response[0]["page_info"]:
-
-                logger.warning(response[0]["page_info"]['next_page_token'])
-                logger.warning(type(response[0]["page_info"]['next_page_token']))
-
+                logger.debug(f"Next page token: {response[0]['page_info']['next_page_token']}")
                 kwargs['page_token'] = response[0]['page_info']['next_page_token']
-                response = func(*args, **kwargs)
+                response = func(*args, **kwargs, enhance=False)
                 for obj in response:
                     if "items" in obj:
                         items.extend(obj["items"])
         except KeyError:
+            logger.debug("KeyError")
             return response
-
+        logger.debug("Finished fetching all pages.")
         return items
     return wrapper

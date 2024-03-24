@@ -54,7 +54,7 @@ class TestSales(unittest.TestCase):
                                                     url=expected_url,
                                                     params={
                                                         'code': coupon_code
-                                                    })
+                                                    }, enhance=True)
 
     @patch.object(Hotmart, '_request_with_token')
     def test_delete_coupon(self, mock_req_with_token):

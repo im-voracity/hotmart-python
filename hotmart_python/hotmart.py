@@ -92,15 +92,18 @@ class Hotmart:
         """
         try:
             if enhance:
-                if isinstance(response, dict):
-                    return [response]
+                if isinstance(response, dict) and response["items"]:
+                    return response["items"]
+
+                if isinstance(response, dict) and response["lessons"]:
+                    return response["lessons"]
 
                 if isinstance(response, list):
                     return response
 
             if not enhance:
                 if isinstance(response, dict):
-                    return response["items"]
+                    return [response]
 
                 if isinstance(response, list):
                     return response
@@ -271,9 +274,10 @@ class Hotmart:
 
         return self._handle_response(response, enhance=enhance)
 
-    def get_sales_history(self, enhance=True, **kwargs: Any) -> Response:
+    def get_sales_history(self, enhance: bool = True, **kwargs: Any) -> Response:
         """
         Retrieves sales history data based on the provided filters.
+        :param enhance: When True, discards page_info and returns only the items. (Default is True)
         :param kwargs: Filters to apply on the request. Expected kwargs can be found in
         the "Request parameters" section of the API Docs.
         :return: Sales history data if available, otherwise None.
@@ -287,10 +291,10 @@ class Hotmart:
         payload = self._build_payload(**kwargs)
         return self._request_with_token(method=method, url=url, params=payload, enhance=enhance)
 
-    def get_sales_summary(self, **kwargs: Any) -> Response:
+    def get_sales_summary(self, enhance: bool = True, **kwargs: Any) -> Response:
         """
         Retrieves sales summary data based on the provided filters.
-
+        :param enhance: When True, discards page_info and returns only the items. (Default is True)
         :param kwargs: Filters to apply on the request. Expected kwargs can be found in the
         "Request parameters" section of the API Docs.
         :return: Sales summary data if available, otherwise None.
@@ -302,12 +306,12 @@ class Hotmart:
         base_url = self._build_url('payments')
         url = f'{base_url}/sales/summary'
         payload = self._build_payload(**kwargs)
-        return self._request_with_token(method=method, url=url, params=payload)
+        return self._request_with_token(method=method, url=url, params=payload, enhance=enhance)
 
-    def get_sales_participants(self, **kwargs: Any) -> Response:
+    def get_sales_participants(self, enhance: bool = True, **kwargs: Any) -> Response:
         """
         Retrieves sales user data based on the provided filters.
-
+        :param enhance: When True, discards page_info and returns only the items. (Default is True)
         :param kwargs: Filters to apply on the request. Expected kwargs can be found in the
         "Request parameters" section of the API Docs.
         :return: Sales user data if available, otherwise None.
@@ -319,12 +323,12 @@ class Hotmart:
         base_url = self._build_url('payments')
         url = f'{base_url}/sales/users'
         payload = self._build_payload(**kwargs)
-        return self._request_with_token(method=method, url=url, params=payload)
+        return self._request_with_token(method=method, url=url, params=payload, enhance=enhance)
 
-    def get_sales_commissions(self, **kwargs: Any) -> Response:
+    def get_sales_commissions(self, enhance: bool = True, **kwargs: Any) -> Response:
         """
         Retrieves sales commissions data based on the provided filters.
-
+        :param enhance: When True, discards page_info and returns only the items. (Default is True)
         :param kwargs: Filters to apply on the request. Expected kwargs can be found in the
         "Request parameters" section of the API Docs.
         :return: Sales commissions data if available, otherwise None.
@@ -336,12 +340,12 @@ class Hotmart:
         base_url = self._build_url('payments')
         url = f'{base_url}/sales/commissions'
         payload = self._build_payload(**kwargs)
-        return self._request_with_token(method=method, url=url, params=payload, )
+        return self._request_with_token(method=method, url=url, params=payload, enhance=enhance)
 
-    def get_sales_price_details(self, **kwargs: Any) -> Response:
+    def get_sales_price_details(self, enhance: bool = True, **kwargs: Any) -> Response:
         """
         Retrieves sales price details based on the provided filters.
-
+        :param enhance: When True, discards page_info and returns only the items. (Default is True)
         :param kwargs: Filters to apply on the request. Expected kwargs can be found in the
         "Request parameters" section of the API Docs.
         :return: Sales price details if available, otherwise None.
@@ -353,12 +357,12 @@ class Hotmart:
         base_url = self._build_url('payments')
         url = f'{base_url}/sales/price/details'
         payload = self._build_payload(**kwargs)
-        return self._request_with_token(method=method, url=url, params=payload)
+        return self._request_with_token(method=method, url=url, params=payload, enhance=enhance)
 
-    def get_subscriptions(self, **kwargs: Any) -> Response:
+    def get_subscriptions(self, enhance: bool = True, **kwargs: Any) -> Response:
         """
         Retrieves subscription data based on the provided filters.
-
+        :param enhance: When True, discards page_info and returns only the items. (Default is True)
         :param kwargs: Filters to apply on the request. Expected kwargs can be found in the
         "Request parameters" section of the API Docs.
         :return: Subscription data if available, otherwise None.
@@ -370,11 +374,12 @@ class Hotmart:
         base_url = self._build_url('payments')
         url = f'{base_url}/subscriptions'
         payload = self._build_payload(**kwargs)
-        return self._request_with_token(method=method, url=url, params=payload)
+        return self._request_with_token(method=method, url=url, params=payload, enhance=enhance)
 
-    def get_subscriptions_summary(self, **kwargs: Any) -> Response:
+    def get_subscriptions_summary(self, enhance: bool = True, **kwargs: Any) -> Response:
         """
         Retrieves subscription summary data based on the provided filters.
+        :param enhance: When True, discards page_info and returns only the items. (Default is True)
         :param kwargs: Filters to apply on the request. Expected kwargs can be found in the
         "Request parameters" section of the API Docs.
         :return: Subscription data if available, otherwise None.
@@ -387,12 +392,13 @@ class Hotmart:
         base_url = self._build_url('payments')
         url = f'{base_url}/subscriptions/summary'
         payload = self._build_payload(**kwargs)
-        return self._request_with_token(method=method, url=url, params=payload)
+        return self._request_with_token(method=method, url=url, params=payload, enhance=enhance)
 
-    def get_subscription_purchases(self, subscriber_code, **kwargs: Any) -> Response:
+    def get_subscription_purchases(self, subscriber_code, enhance: bool = True, **kwargs: Any) -> \
+            Response:
         """
         Retrieves subscription purchases data based on the provided filters.
-
+        :param enhance: When True, discards page_info and returns only the items. (Default is True)
         :param subscriber_code: The subscriber code to filter the request.
         :param kwargs: Filters to apply on the request. Expected kwargs can be found in the
         "Request parameters" section of the API Docs.
@@ -407,7 +413,7 @@ class Hotmart:
         base_url = self._build_url('payments')
         url = f'{base_url}/subscriptions/{subscriber_code}/purchases'
         payload = self._build_payload(**kwargs)
-        return self._request_with_token(method=method, url=url, params=payload)
+        return self._request_with_token(method=method, url=url, params=payload, enhance=enhance)
 
     def cancel_subscription(self, subscriber_code: list[str], send_email: bool = True) -> Response:
         """
@@ -479,7 +485,6 @@ class Hotmart:
     def create_coupon(self, product_id: str, coupon_code: str, discount: float) -> Response:
         """
         Creates a coupon for a product.
-
         :param product_id: UID of the product you want to create the coupon for.
         :param coupon_code: The code of the coupon you want to create.
         :param discount: The discount you want to apply to the coupon, must be greater than 0 and
@@ -500,10 +505,10 @@ class Hotmart:
         }
         return self._request_with_token(method=method, url=url, body=payload)
 
-    def get_coupon(self, product_id: str, code: str) -> Response:
+    def get_coupon(self, product_id: str, code: str, enhance: bool = True) -> Response:
         """
         Retrieves a coupon for a product.
-
+        :param enhance: When True, discards page_info and returns only the items. (Default is True)
         :param product_id: UID of the product you want to retrieve the coupon for.
         :param code: The code of the coupon you want to retrieve.
         :return: All Coupons for the product.
@@ -519,7 +524,7 @@ class Hotmart:
         params = {
             "code": code
         }
-        return self._request_with_token(method=method, url=url, params=params)
+        return self._request_with_token(method=method, url=url, params=params, enhance=enhance)
 
     def delete_coupon(self, coupon_id):
         """

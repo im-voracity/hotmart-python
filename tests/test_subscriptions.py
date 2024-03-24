@@ -30,7 +30,8 @@ class TestSubscriptions(unittest.TestCase):
         expected_url = 'https://developers.hotmart.com/payments/api/v1/subscriptions'
 
         mock_req_with_token.assert_called_once_with(method="get", url=expected_url,
-                                                    params={'param1': 'value1', 'param2': 'value2'})
+                                                    params={'param1': 'value1', 'param2': 'value2'},
+                                                    enhance=True)
 
     @patch.object(Hotmart, '_request_with_token')
     def test_get_subscriptions_summary_success(self, mock_req_with_token):
@@ -47,7 +48,8 @@ class TestSubscriptions(unittest.TestCase):
         expected_url = 'https://developers.hotmart.com/payments/api/v1/subscriptions/summary'
 
         mock_req_with_token.assert_called_once_with(method="get", url=expected_url,
-                                                    params={'param1': 'value1', 'param2': 'value2'})
+                                                    params={'param1': 'value1', 'param2': 'value2'},
+                                                    enhance=True)
 
     @patch.object(Hotmart, '_request_with_token')
     def test_get_subscriptions_purchases_success(self, mock_req_with_token):
@@ -68,7 +70,8 @@ class TestSubscriptions(unittest.TestCase):
                         f'/subscriptions/{subscriber_code}/purchases')
 
         mock_req_with_token.assert_called_once_with(method="get", url=expected_url,
-                                                    params={'param1': 'value1', 'param2': 'value2'})
+                                                    params={'param1': 'value1', 'param2': 'value2'},
+                                                    enhance=True)
 
     @patch.object(Hotmart, '_request_with_token')
     def test_cancel_subscriptions(self, mock_req_with_token):
