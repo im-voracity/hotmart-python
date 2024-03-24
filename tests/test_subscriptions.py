@@ -1,6 +1,6 @@
 import unittest
-import requests.exceptions
 from unittest.mock import patch
+from requests import Response
 from hotmart_python import Hotmart
 
 client_id = 'b32450c1-1352-246a-b6d3-d49d6db815ea'
@@ -9,107 +9,134 @@ basic = ('Basic YjIzNTQxYzAtMyEzNS20MjVhLWI1ZDItZDM4ZDVkYjcwNGVhOjA5Y2JiMTEz'
          'LWRiZWMtNGI0YS05OWUxLTI3Y2FiNDdkOTI4Mg==')
 
 
-class TestHotmart(unittest.TestCase):
+class TestSubscriptions(unittest.TestCase):
     def setUp(self):
         self.hotmart = Hotmart(client_id=client_id,
                                client_secret=client_secret,
                                basic=basic)
 
-    @patch.object(Hotmart, '_pagination')
-    def test_should_retrieve_subscriptions_when_valid_request(self, mock_pagination):
-        mock_pagination.return_value = {
-            "subscriptions": [
-                {"id": 1},
-                {"id": 2}
-            ]
+    @patch.object(Hotmart, '_request_with_token')
+    def test_get_subscriptions_success(self, mock_req_with_token):
+        mock_response = Response()
+        mock_response.status_code = 200
+        mock_response.return_value = {
+            'items': [{
+                'some': 'info'
+            }]
         }
-        result = self.hotmart.get_subscriptions(paginate=False)
-        self.assertEqual(result, {
-            "subscriptions": [
-                {"id": 1},
-                {"id": 2}
-            ]
-        })
+        mock_req_with_token.return_value = mock_response
+
+        self.hotmart.get_subscriptions(param1='value1', param2='value2')
+        expected_url = 'https://developers.hotmart.com/payments/api/v1/subscriptions'
+
+        mock_req_with_token.assert_called_once_with(method="get", url=expected_url,
+                                                    params={'param1': 'value1', 'param2': 'value2'})
 
     @patch.object(Hotmart, '_request_with_token')
-    def test_should_raise_exception_when_retrieving_subscriptions_fails(self,
-                                                                        mock_request_with_token):
-        mock_request_with_token.side_effect = requests.exceptions.RequestException
-        with self.assertRaises(requests.exceptions.RequestException):
-            self.hotmart.get_subscriptions(paginate=False)
-
-    @patch.object(Hotmart, '_request_with_token')
-    def should_retrieve_subscription_summary_when_valid_request(self, mock_request_with_token):
-        mock_request_with_token.return_value = {"summary": {"total": 10}}
-        result = self.hotmart.get_subscriptions_summary(paginate=False)
-        self.assertEqual(result, {"summary": {"total": 10}})
-
-    @patch.object(Hotmart, '_request_with_token')
-    def test_raise_exception_when_retrieving_subscription_summary_fails(self,
-                                                                        mock_request_with_token):
-        mock_request_with_token.side_effect = requests.exceptions.RequestException
-        with self.assertRaises(requests.exceptions.RequestException):
-            self.hotmart.get_subscriptions_summary(paginate=False)
-
-    @patch.object(Hotmart, '_pagination')
-    def test_should_retrieve_subscription_purchases_when_valid_request(self, mock_pagination):
-        mock_pagination.return_value = {
-            "purchases": [
-                {"id": 1},
-                {"id": 2}
-            ]
+    def test_get_subscriptions_summary_success(self, mock_req_with_token):
+        mock_response = Response()
+        mock_response.status_code = 200
+        mock_response.return_value = {
+            'items': [{
+                'some': 'info'
+            }]
         }
-        result = self.hotmart.get_subscription_purchases(subscriber_code="123", paginate=False)
-        self.assertEqual(result, {
-            "purchases": [
-                {"id": 1},
-                {"id": 2}
-            ]
-        })
+        mock_req_with_token.return_value = mock_response
+
+        self.hotmart.get_subscriptions_summary(param1='value1', param2='value2')
+        expected_url = 'https://developers.hotmart.com/payments/api/v1/subscriptions/summary'
+
+        mock_req_with_token.assert_called_once_with(method="get", url=expected_url,
+                                                    params={'param1': 'value1', 'param2': 'value2'})
 
     @patch.object(Hotmart, '_request_with_token')
-    def test_raise_exception_when_retrieving_subscription_purchases_fails(self,
-                                                                          mock_request_with_token):
-        mock_request_with_token.side_effect = requests.exceptions.RequestException
-        with self.assertRaises(requests.exceptions.RequestException):
-            self.hotmart.get_subscription_purchases(subscriber_code="123", paginate=False)
+    def test_get_subscriptions_purchases_success(self, mock_req_with_token):
+        mock_response = Response()
+        mock_response.status_code = 200
+        mock_response.return_value = {
+            'items': [{
+                'some': 'info'
+            }]
+        }
+        mock_req_with_token.return_value = mock_response
+
+        subscriber_code = "HTMT20219"
+
+        self.hotmart.get_subscription_purchases(subscriber_code=subscriber_code, param1='value1',
+                                                param2='value2')
+        expected_url = (f'https://developers.hotmart.com/payments/api/v1'
+                        f'/subscriptions/{subscriber_code}/purchases')
+
+        mock_req_with_token.assert_called_once_with(method="get", url=expected_url,
+                                                    params={'param1': 'value1', 'param2': 'value2'})
 
     @patch.object(Hotmart, '_request_with_token')
-    def test_should_cancel_subscription_when_valid_request(self, mock_request_with_token):
-        mock_request_with_token.return_value = {"status": "cancelled"}
-        result = self.hotmart.cancel_subscription(subscriber_code=["123"], send_email=True)
-        self.assertEqual(result, {"status": "cancelled"})
+    def test_cancel_subscriptions(self, mock_req_with_token):
+        mock_response = Response()
+        mock_response.status_code = 200
+        mock_response.return_value = {
+            'items': [{
+                'some': 'info'
+            }]
+        }
+        mock_req_with_token.return_value = mock_response
+
+        subscriber_code = ["HTMT20219"]
+        expected_url = ('https://developers.hotmart.com/payments/api/v1'
+                        '/subscriptions/cancel')
+        expected_body = {
+            'subscriber_code': subscriber_code,
+            'send_email': True
+        }
+
+        self.hotmart.cancel_subscription(subscriber_code=subscriber_code)
+
+        mock_req_with_token.assert_called_once_with(method="post", url=expected_url,
+                                                    body=expected_body)
 
     @patch.object(Hotmart, '_request_with_token')
-    def test_should_raise_exception_when_cancelling_subscription_fails(self,
-                                                                       mock_request_with_token):
-        mock_request_with_token.side_effect = requests.exceptions.RequestException
-        with self.assertRaises(requests.exceptions.RequestException):
-            self.hotmart.cancel_subscription(subscriber_code=["123"], send_email=True)
+    def test_reactivate_and_charge_subscription(self, mock_req_with_token):
+        mock_response = Response()
+        mock_response.status_code = 200
+        mock_response.return_value = {
+            'items': [{
+                'some': 'info'
+            }]
+        }
+        mock_req_with_token.return_value = mock_response
+
+        subscriber_code = ["HTMT20219"]
+        expected_url = ('https://developers.hotmart.com/payments/api/v1'
+                        '/subscriptions/reactivate')
+        expected_body = {
+            'subscriber_code': subscriber_code,
+            'charge': False
+        }
+
+        self.hotmart.reactivate_and_charge_subscription(subscriber_code=subscriber_code)
+
+        mock_req_with_token.assert_called_once_with(method="post", url=expected_url,
+                                                    body=expected_body)
 
     @patch.object(Hotmart, '_request_with_token')
-    def test_should_reactivate_and_charge_subscription_when_valid_request(self,
-                                                                          mock_request_with_token):
-        mock_request_with_token.return_value = {"status": "reactivated"}
-        result = self.hotmart.reactivate_and_charge_subscription(subscriber_code=["123"],
-                                                                 charge=True)
-        self.assertEqual(result, {"status": "reactivated"})
+    def test_change_due_day(self, mock_req_with_token):
+        mock_response = Response()
+        mock_response.status_code = 200
+        mock_response.return_value = {
+            'items': [{
+                'some': 'info'
+            }]
+        }
+        mock_req_with_token.return_value = mock_response
 
-    @patch.object(Hotmart, '_request_with_token')
-    def test_raise_exception_when_reactivating_and_charging_subscription_fails(self,
-                                                                               mock_request_with_token):
-        mock_request_with_token.side_effect = requests.exceptions.RequestException
-        with self.assertRaises(requests.exceptions.RequestException):
-            self.hotmart.reactivate_and_charge_subscription(subscriber_code=["123"], charge=True)
+        subscriber_code = "HTMT20219"
+        expected_url = (f'https://developers.hotmart.com/payments/api/v1'
+                        f'/subscriptions/{subscriber_code}')
+        expected_body = {
+            'due_day': 25
+        }
 
-    @patch.object(Hotmart, '_request_with_token')
-    def test_should_change_due_day_when_valid_request(self, mock_request_with_token):
-        mock_request_with_token.return_value = {"status": "due day changed"}
-        result = self.hotmart.change_due_day(subscriber_code="123", new_due_day=15)
-        self.assertEqual(result, {"status": "due day changed"})
+        self.hotmart.change_due_day(subscriber_code, 25)
 
-    @patch.object(Hotmart, '_request_with_token')
-    def test_should_raise_exception_when_changing_due_day_fails(self, mock_request_with_token):
-        mock_request_with_token.side_effect = requests.exceptions.RequestException
-        with self.assertRaises(requests.exceptions.RequestException):
-            self.hotmart.change_due_day(subscriber_code="123", new_due_day=15)
+        mock_req_with_token.assert_called_once_with(method="patch", url=expected_url,
+                                                    body=expected_body)

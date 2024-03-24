@@ -1,224 +1,123 @@
 import unittest
 from unittest.mock import patch
+from requests import Response
 from hotmart_python import Hotmart
 
 client_id = 'b32450c1-1352-246a-b6d3-d49d6db815ea'
 client_secret = '90bcc221-cebd-5a5b-00e2-72cab47d9282'
-basic = ('Basic YjIzNTQxYzAtMyEzNS20MjVhLWI1ZDItZDM4ZDVkYjcwNGVhOjA5Y2JiMTEzLWRiZWMtNGI0YS05OWUxLT\
-I3Y2FiNDdkOTI4Mg==')
+basic = ('Basic YjIzNTQxYzAtMyEzNS20MjVhLWI1ZDItZDM4ZDVkYjcwNGVhOjA5Y2JiMTEz'
+         'LWRiZWMtNGI0YS05OWUxLTI3Y2FiNDdkOTI4Mg==')
 
 
-class TestHotmart(unittest.TestCase):
+class TestSales(unittest.TestCase):
     def setUp(self):
         self.hotmart = Hotmart(client_id=client_id,
                                client_secret=client_secret,
                                basic=basic)
 
-    @patch.object(Hotmart, '_build_payload')
-    @patch.object(Hotmart, '_pagination')
-    def test_get_sales_history_with_pagination(self, mock_pagination, mock_build_payload):
-        mock_build_payload.return_value = {"transaction_status": "approved"}
-        mock_pagination.return_value = [{"id": 1}, {"id": 2}]
-        result = self.hotmart.get_sales_history(paginate=True, transaction_status="approved")
-
-        self.assertEqual(result, [{"id": 1}, {"id": 2}])
-
-    @patch.object(Hotmart, '_build_payload')
-    @patch.object(Hotmart, '_pagination')
-    def test_get_sales_history_no_pagination(self, mock_pagination, mock_build_payload):
-        mock_build_payload.return_value = {"filter1": "value1"}
-        mock_pagination.return_value = [{"id": 1}, {"id": 2}]
-        result = self.hotmart.get_sales_history(paginate=False, filter1="value1")
-        self.assertEqual(result, [{"id": 1}, {"id": 2}])
-
-    @patch.object(Hotmart, '_build_payload')
-    @patch.object(Hotmart, '_pagination')
-    def test_get_sales_history_with_failed_pagination(self, mock_pagination, mock_build_payload):
-        mock_build_payload.return_value = {"filter1": "value1"}
-        mock_pagination.return_value = None
-        result = self.hotmart.get_sales_history(paginate=True, filter1="value1")
-
-        self.assertIsNone(result)
-
-    @patch.object(Hotmart, '_build_payload')
-    @patch.object(Hotmart, '_pagination')
-    def test_get_sales_summary_with_pagination(self, mock_pagination, mock_build_payload):
-        mock_build_payload.return_value = {
-            "filter1": "value1"
+    @patch.object(Hotmart, '_request_with_token')
+    def test_get_sales_history(self, mock_req_with_token):
+        mock_response = Response()
+        mock_response.status_code = 200
+        mock_response.return_value = {
+            'items': [{
+                'some': 'info'
+            }]
         }
-        mock_pagination.return_value = [
-            {"id": 1},
-            {"id": 2}
-        ]
-        result = self.hotmart.get_sales_summary(paginate=True, filter1="value1")
+        mock_req_with_token.return_value = mock_response
 
-        self.assertEqual(result, [
-            {"id": 1},
-            {"id": 2}
-        ])
+        self.hotmart.get_sales_history(buyer_name='Paula', payment_type='BILLET')
+        expected_url = 'https://developers.hotmart.com/payments/api/v1/sales/history'
 
-    @patch.object(Hotmart, '_build_payload')
-    @patch.object(Hotmart, '_pagination')
-    def test_get_sales_summary_no_pagination(self, mock_pagination, mock_build_payload):
-        mock_build_payload.return_value = {
-            "filter1": "value1"
+        mock_req_with_token.assert_called_once_with(method="get",
+                                                    url=expected_url,
+                                                    params={
+                                                        'buyer_name': 'Paula',
+                                                        'payment_type': 'BILLET'
+                                                    },
+                                                    enhance=True)
+
+    @patch.object(Hotmart, '_request_with_token')
+    def test_get_sales_summary(self, mock_req_with_token):
+        mock_response = Response()
+        mock_response.status_code = 200
+        mock_response.return_value = {
+            'items': [{
+                'some': 'info'
+            }]
         }
-        mock_pagination.return_value = [
-            {"id": 1},
-            {"id": 2}
-        ]
-        result = self.hotmart.get_sales_summary(paginate=False, filter1="value1")
+        mock_req_with_token.return_value = mock_response
 
-        self.assertEqual(result, [
-            {"id": 1},
-            {"id": 2}
-        ])
+        self.hotmart.get_sales_summary(buyer_name='Paula', payment_type='BILLET')
+        expected_url = 'https://developers.hotmart.com/payments/api/v1/sales/summary'
 
-    @patch.object(Hotmart, '_build_payload')
-    @patch.object(Hotmart, '_pagination')
-    def test_get_sales_summary_with_failed_pagination(self, mock_pagination, mock_build_payload):
-        mock_build_payload.return_value = {
-            "filter1": "value1"
+        mock_req_with_token.assert_called_once_with(method="get",
+                                                    url=expected_url,
+                                                    params={
+                                                        'buyer_name': 'Paula',
+                                                        'payment_type': 'BILLET'
+                                                    })
+
+    @patch.object(Hotmart, '_request_with_token')
+    def test_get_sales_participants(self, mock_req_with_token):
+        mock_response = Response()
+        mock_response.status_code = 200
+        mock_response.return_value = {
+            'items': [{
+                'some': 'info'
+            }]
         }
-        mock_pagination.return_value = None
-        result = self.hotmart.get_sales_summary(paginate=True, filter1="value1")
+        mock_req_with_token.return_value = mock_response
 
-        self.assertIsNone(result)
+        self.hotmart.get_sales_participants(buyer_name='Paula', transaction_status='APPROVED')
+        expected_url = 'https://developers.hotmart.com/payments/api/v1/sales/users'
 
-    @patch.object(Hotmart, '_build_payload')
-    @patch.object(Hotmart, '_pagination')
-    def test_sales_participants_retrieval_with_pagination(self, mock_pagination,
-                                                          mock_build_payload):
-        mock_build_payload.return_value = {
-            "filter1": "value1"
+        mock_req_with_token.assert_called_once_with(method="get",
+                                                    url=expected_url,
+                                                    params={
+                                                        'buyer_name': 'Paula',
+                                                        'transaction_status': 'APPROVED'
+                                                    })
+
+    @patch.object(Hotmart, '_request_with_token')
+    def test_get_sales_commissions(self, mock_req_with_token):
+        mock_response = Response()
+        mock_response.status_code = 200
+        mock_response.return_value = {
+            'items': [{
+                'some': 'info'
+            }]
         }
-        mock_pagination.return_value = [
-            {"id": 1},
-            {"id": 2}
-        ]
-        result = self.hotmart.get_sales_participants(paginate=True, filter1="value1")
+        mock_req_with_token.return_value = mock_response
 
-        self.assertEqual(result, [
-            {"id": 1},
-            {"id": 2}
-        ])
+        self.hotmart.get_sales_commissions(commission_as='PRODUCER', transaction_status='APPROVED')
+        expected_url = 'https://developers.hotmart.com/payments/api/v1/sales/commissions'
 
-    @patch.object(Hotmart, '_build_payload')
-    @patch.object(Hotmart, '_pagination')
-    def test_sales_participants_retrieval_no_pagination(self, mock_pagination, mock_build_payload):
-        mock_build_payload.return_value = {
-            "filter1": "value1"
+        mock_req_with_token.assert_called_once_with(method="get",
+                                                    url=expected_url,
+                                                    params={
+                                                        'commission_as': 'PRODUCER',
+                                                        'transaction_status': 'APPROVED'
+                                                    })
+
+    @patch.object(Hotmart, '_request_with_token')
+    def test_get_sales_price_details(self, mock_req_with_token):
+        mock_response = Response()
+        mock_response.status_code = 200
+        mock_response.return_value = {
+            'items': [{
+                'some': 'info'
+            }]
         }
-        mock_pagination.return_value = [
-            {"id": 1},
-            {"id": 2}
-        ]
-        result = self.hotmart.get_sales_participants(paginate=False, filter1="value1")
+        mock_req_with_token.return_value = mock_response
 
-        self.assertEqual(result, [
-            {"id": 1},
-            {"id": 2}
-        ])
+        self.hotmart.get_sales_price_details(payment_type='CREDIT_CARD',
+                                             transaction_status='APPROVED')
+        expected_url = 'https://developers.hotmart.com/payments/api/v1/sales/price/details'
 
-    @patch.object(Hotmart, '_build_payload')
-    @patch.object(Hotmart, '_pagination')
-    def test_sales_participants_retrieval_failed_pagination(self, mock_pagination,
-                                                            mock_build_payload):
-        mock_build_payload.return_value = {
-            "filter1": "value1"
-        }
-        mock_pagination.return_value = None
-        result = self.hotmart.get_sales_participants(paginate=True, filter1="value1")
-
-        self.assertIsNone(result)
-
-    @patch.object(Hotmart, '_build_payload')
-    @patch.object(Hotmart, '_pagination')
-    def test_sales_commissions_retrieval_with_pagination(self, mock_pagination, mock_build_payload):
-        mock_build_payload.return_value = {
-            "filter1": "value1"
-        }
-        mock_pagination.return_value = [
-            {"id": 1},
-            {"id": 2}
-        ]
-        result = self.hotmart.get_sales_commissions(paginate=True, filter1="value1")
-
-        self.assertEqual(result, [
-            {"id": 1},
-            {"id": 2}
-        ])
-
-    @patch.object(Hotmart, '_build_payload')
-    @patch.object(Hotmart, '_pagination')
-    def test_sales_commissions_retrieval_no_pagination(self, mock_pagination, mock_build_payload):
-        mock_build_payload.return_value = {
-            "filter1": "value1"
-        }
-        mock_pagination.return_value = [
-            {"id": 1},
-            {"id": 2}
-        ]
-        result = self.hotmart.get_sales_commissions(paginate=False, filter1="value1")
-
-        self.assertEqual(result, [
-            {"id": 1},
-            {"id": 2}
-        ])
-
-    @patch.object(Hotmart, '_build_payload')
-    @patch.object(Hotmart, '_pagination')
-    def test_sales_commissions_retrieval_failed_pagination(self, mock_pagination,
-                                                           mock_build_payload):
-        mock_build_payload.return_value = {
-            "filter1": "value1"
-        }
-        mock_pagination.return_value = None
-        result = self.hotmart.get_sales_commissions(paginate=True, filter1="value1")
-
-        self.assertIsNone(result)
-
-    @patch.object(Hotmart, '_build_payload')
-    @patch.object(Hotmart, '_pagination')
-    def test_sales_price_details_retrieval_with_pagination(self, mock_pagination,
-                                                           mock_build_payload):
-        mock_build_payload.return_value = {
-            "filter1": "value1"
-        }
-        mock_pagination.return_value = [
-            {"id": 1},
-            {"id": 2}
-        ]
-        result = self.hotmart.get_sales_price_details(paginate=True, filter1="value1")
-        self.assertEqual(result, [
-            {"id": 1},
-            {"id": 2}
-        ])
-
-    @patch.object(Hotmart, '_build_payload')
-    @patch.object(Hotmart, '_pagination')
-    def test_sales_price_details_retrieval_no_pagination(self, mock_pagination, mock_build_payload):
-        mock_build_payload.return_value = {
-            "filter1": "value1"
-        }
-        mock_pagination.return_value = [
-            {"id": 1},
-            {"id": 2}
-        ]
-        result = self.hotmart.get_sales_price_details(paginate=False, filter1="value1")
-        self.assertEqual(result, [
-            {"id": 1},
-            {"id": 2}
-        ])
-
-    @patch.object(Hotmart, '_build_payload')
-    @patch.object(Hotmart, '_pagination')
-    def test_sales_price_details_retrieval_failed_pagination(self, mock_pagination,
-                                                             mock_build_payload):
-        mock_build_payload.return_value = {
-            "filter1": "value1"
-        }
-        mock_pagination.return_value = None
-        result = self.hotmart.get_sales_price_details(paginate=True, filter1="value1")
-
-        self.assertIsNone(result)
+        mock_req_with_token.assert_called_once_with(method="get",
+                                                    url=expected_url,
+                                                    params={
+                                                        'payment_type': 'CREDIT_CARD',
+                                                        'transaction_status': 'APPROVED'
+                                                    })

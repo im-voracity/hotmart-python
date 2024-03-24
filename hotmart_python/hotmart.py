@@ -6,6 +6,8 @@ import sys
 
 from typing import List, Dict, Any, Optional
 
+Response = List[Dict[str, Any]]
+
 # Base Logging Configs
 logger = logging.getLogger(__name__)
 
@@ -79,6 +81,34 @@ class Hotmart:
                 payload[key] = value
         return payload
 
+    @staticmethod
+    def _handle_response(response: Dict[str, Any] | List[Dict[str, Any]],
+                         enhance=True) -> Response:
+        """
+        Standardizes the output of the response to always be a list of dictionaries.
+        :param response: The original response which can be a dictionary or a list of dictionaries.
+        :param enhance: When True, discards page_info and returns only the items. (Default is True)
+        :return: A list of dictionaries.
+        """
+        try:
+            if enhance:
+                if isinstance(response, dict):
+                    return [response]
+
+                if isinstance(response, list):
+                    return response
+
+            if not enhance:
+                if isinstance(response, dict):
+                    return response["items"]
+
+                if isinstance(response, list):
+                    return response
+
+            raise ValueError("Response must be a dictionary or a list of dictionaries.")
+        except KeyError:
+            return [response]
+
     def _build_url(self, endpoint_type: str):
         """
         Builds the URLs for better dynamic requests.
@@ -117,7 +147,7 @@ class Hotmart:
                       headers: Optional[Dict[str, str]] = None,
                       params: Optional[Dict[str, Any]] = None,
                       body: Optional[Dict[str, str]] = None,
-                      log_level: int = None) -> Optional[Dict[str, Any]]:
+                      log_level: Optional[int] = None) -> Dict[str, Any] | List[Dict[str, Any]]:
         """
         Makes a request to the given url.
         :param method: The request method (e.g, requests.get, requests.post).
@@ -172,11 +202,10 @@ class Hotmart:
         Checks if the current token has expired.
         :return: True if the token has expired, False otherwise.
         """
-        return (self.token_expires_at is not None and self.token_expires_at <
-                time.time())
+        return self.token_expires_at is not None and self.token_expires_at < time.time()
 
     def _fetch_new_token(self) -> str:
-        self.logger.info("Fetching a new access token.")
+        self.logger.debug("Fetching a new access token.")
 
         method_url = 'https://api-sec-vlc.hotmart.com/security/oauth/token'
         headers = {'Authorization': self.basic}
@@ -185,21 +214,21 @@ class Hotmart:
 
         response = self._make_request(requests.post, method_url,
                                       headers=headers, params=payload)
-        self.logger.info("Token obtained successfully")
+        self.logger.debug("Token obtained successfully")
         return response['access_token']
 
-    def _get_token(self) -> Optional[str]:
+    def _get_token(self) -> str:
         """
         Retrieves an access token to authenticate requests.
         :return: The access token if obtained successfully, otherwise None.
         """
         if not self._is_token_expired() and self.token_cache is not None:
             if not self.token_found_in_cache:
-                self.logger.info("Token found in cache.")
+                self.logger.debug("Token found in cache.")
                 self.token_found_in_cache = True
             return self.token_cache
 
-        self.logger.info("Token not found in cache or expired.")
+        self.logger.debug("Token not found in cache or expired.")
 
         token = self._fetch_new_token()
         if token is not None:
@@ -207,8 +236,9 @@ class Hotmart:
             self.token_found_in_cache = False
         return token
 
-    def _request_with_token(self, method: str, url: str, body: Optional[Dict[str, Any]] = None,
-                            params: Optional[Dict[str, Any]] = None) -> Dict[str, Any]:
+    def _request_with_token(self, method: str, url: str, enhance: bool = None,
+                            body: Optional[Dict[str, Any]] = None,
+                            params: Optional[Dict[str, Any]] = None) -> Response:
         """
         Makes an authenticated request (GET, POST, PATCH, etc.) to the
         specified URL with the given body or params.
@@ -236,54 +266,16 @@ class Hotmart:
         if method.upper() not in method_mapping:
             raise ValueError(f"Unsupported method: {method}")
 
-        return self._make_request(method_mapping[method.upper()], url, headers=headers,
-                                  params=params, body=body)
+        response = self._make_request(method_mapping[method.upper()], url, headers=headers,
+                                      params=params, body=body)
 
-    def _pagination(self, method: str, url: str, params: Optional[Dict[str, Any]] = None,
-                    paginate: bool = False) -> Optional[List[Dict[str, Any]]]:
-        """
-        Retrieves all pages of data for a paginated endpoint.
-        :param url: The URL of the paginated endpoint.
-        :param params: Optional request parameters.
-        :param paginate: Whether to paginate the results or not
-         (default is False).
-        :return: A list containing data from all pages,
-         or None if an error occurred.
-        """
-        if not paginate:
-            response = self._request_with_token(method=method, url=url, params=params)
-            return response.get("items", []) if response else None
-        all_items = []
+        return self._handle_response(response, enhance=enhance)
 
-        self.logger.info("Fetching first page...")
-        response = self._request_with_token(method=method, url=url, params=params)
-
-        if response is None:
-            raise ValueError("Failed to fetch first page.")
-
-        all_items.extend(response.get("items", []))
-
-        while "next_page_token" in response.get("page_info", {}):
-            next_page_token = response["page_info"]["next_page_token"]
-            self.logger.info(f"Fetching next page with token: {next_page_token}")
-            params["page_token"] = next_page_token
-            response = self._request_with_token(method, url, params=params)
-
-            if response is None:
-                raise ValueError(
-                    f"Failed to fetch next page with token: {next_page_token}")
-
-            all_items.extend(response.get("items", []))
-
-        self.logger.info("Finished fetching all pages.")
-        return all_items
-
-    def get_sales_history(self, paginate: bool = False, **kwargs: Any) -> Optional[Dict[str, Any]]:
+    def get_sales_history(self, enhance=True, **kwargs: Any) -> Response:
         """
         Retrieves sales history data based on the provided filters.
         :param kwargs: Filters to apply on the request. Expected kwargs can be found in
         the "Request parameters" section of the API Docs.
-        :param paginate: Whether to paginate the results or not (default is False).
         :return: Sales history data if available, otherwise None.
         """
 
@@ -293,15 +285,14 @@ class Hotmart:
         base_url = self._build_url('payments')
         url = f'{base_url}/sales/history'
         payload = self._build_payload(**kwargs)
-        return self._pagination(method=method, url=url, params=payload, paginate=paginate)
+        return self._request_with_token(method=method, url=url, params=payload, enhance=enhance)
 
-    def get_sales_summary(self, paginate: bool = False, **kwargs: Any) -> Optional[Dict[str, Any]]:
+    def get_sales_summary(self, **kwargs: Any) -> Response:
         """
         Retrieves sales summary data based on the provided filters.
 
         :param kwargs: Filters to apply on the request. Expected kwargs can be found in the
         "Request parameters" section of the API Docs.
-        :param paginate: Whether to paginate the results or not (default is False).
         :return: Sales summary data if available, otherwise None.
         """
 
@@ -311,17 +302,14 @@ class Hotmart:
         base_url = self._build_url('payments')
         url = f'{base_url}/sales/summary'
         payload = self._build_payload(**kwargs)
-        return self._pagination(method=method, url=url, params=payload,
-                                paginate=paginate)
+        return self._request_with_token(method=method, url=url, params=payload)
 
-    def get_sales_participants(self, paginate: bool = True, **kwargs: Any) -> \
-            Optional[Dict[str, Any]]:
+    def get_sales_participants(self, **kwargs: Any) -> Response:
         """
         Retrieves sales user data based on the provided filters.
 
         :param kwargs: Filters to apply on the request. Expected kwargs can be found in the
         "Request parameters" section of the API Docs.
-        :param paginate: Whether to paginate the results or not (default is True).
         :return: Sales user data if available, otherwise None.
         """
 
@@ -331,16 +319,14 @@ class Hotmart:
         base_url = self._build_url('payments')
         url = f'{base_url}/sales/users'
         payload = self._build_payload(**kwargs)
-        return self._pagination(method=method, url=url, params=payload, paginate=paginate)
+        return self._request_with_token(method=method, url=url, params=payload)
 
-    def get_sales_commissions(self, paginate: bool = False, **kwargs: Any) -> \
-            Optional[Dict[str, Any]]:
+    def get_sales_commissions(self, **kwargs: Any) -> Response:
         """
         Retrieves sales commissions data based on the provided filters.
 
         :param kwargs: Filters to apply on the request. Expected kwargs can be found in the
         "Request parameters" section of the API Docs.
-        :param paginate: Whether to paginate the results or not (default is False).
         :return: Sales commissions data if available, otherwise None.
         """
 
@@ -350,16 +336,14 @@ class Hotmart:
         base_url = self._build_url('payments')
         url = f'{base_url}/sales/commissions'
         payload = self._build_payload(**kwargs)
-        return self._pagination(method=method, url=url, params=payload, paginate=paginate)
+        return self._request_with_token(method=method, url=url, params=payload, )
 
-    def get_sales_price_details(self, paginate: bool = False, **kwargs: Any) \
-            -> Optional[Dict[str, Any]]:
+    def get_sales_price_details(self, **kwargs: Any) -> Response:
         """
         Retrieves sales price details based on the provided filters.
 
         :param kwargs: Filters to apply on the request. Expected kwargs can be found in the
         "Request parameters" section of the API Docs.
-        :param paginate: Whether to paginate the results or not (default is False).
         :return: Sales price details if available, otherwise None.
         """
 
@@ -369,16 +353,14 @@ class Hotmart:
         base_url = self._build_url('payments')
         url = f'{base_url}/sales/price/details'
         payload = self._build_payload(**kwargs)
-        return self._pagination(method=method, url=url, params=payload, paginate=paginate)
+        return self._request_with_token(method=method, url=url, params=payload)
 
-    def get_subscriptions(self, paginate: bool = False, **kwargs: Any) -> \
-            Optional[Dict[str, Any]]:
+    def get_subscriptions(self, **kwargs: Any) -> Response:
         """
         Retrieves subscription data based on the provided filters.
 
         :param kwargs: Filters to apply on the request. Expected kwargs can be found in the
         "Request parameters" section of the API Docs.
-        :param paginate: Whether to paginate the results or not (default is False).
         :return: Subscription data if available, otherwise None.
         """
 
@@ -388,35 +370,32 @@ class Hotmart:
         base_url = self._build_url('payments')
         url = f'{base_url}/subscriptions'
         payload = self._build_payload(**kwargs)
-        return self._pagination(method=method, url=url, params=payload, paginate=paginate)
+        return self._request_with_token(method=method, url=url, params=payload)
 
-    def get_subscriptions_summary(self, paginate: bool = False, **kwargs: Any) -> \
-            Optional[Dict[str, Any]]:
+    def get_subscriptions_summary(self, **kwargs: Any) -> Response:
         """
         Retrieves subscription summary data based on the provided filters.
-        :param paginate: Whether to paginate the results or not (default is False).
         :param kwargs: Filters to apply on the request. Expected kwargs can be found in the
         "Request parameters" section of the API Docs.
         :return: Subscription data if available, otherwise None.
         """
 
         self._log_instance_mode()
+        self._sandbox_error_warning()
 
         method = "get"
         base_url = self._build_url('payments')
         url = f'{base_url}/subscriptions/summary'
         payload = self._build_payload(**kwargs)
-        return self._pagination(method=method, url=url, params=payload, paginate=paginate)
+        return self._request_with_token(method=method, url=url, params=payload)
 
-    def get_subscription_purchases(self, subscriber_code, paginate: bool = False, **kwargs: Any) -> \
-            Optional[Dict[str, Any]]:
+    def get_subscription_purchases(self, subscriber_code, **kwargs: Any) -> Response:
         """
         Retrieves subscription purchases data based on the provided filters.
 
         :param subscriber_code: The subscriber code to filter the request.
         :param kwargs: Filters to apply on the request. Expected kwargs can be found in the
         "Request parameters" section of the API Docs.
-        :param paginate: Whether to paginate the results or not (default is False).
         :return: Subscription purchases data if available, otherwise None.
         """
 
@@ -428,10 +407,9 @@ class Hotmart:
         base_url = self._build_url('payments')
         url = f'{base_url}/subscriptions/{subscriber_code}/purchases'
         payload = self._build_payload(**kwargs)
-        return self._pagination(method=method, url=url, params=payload, paginate=paginate)
+        return self._request_with_token(method=method, url=url, params=payload)
 
-    def cancel_subscription(self, subscriber_code: list[str], send_email: bool = True) -> \
-            Optional[Dict[str, Any]]:
+    def cancel_subscription(self, subscriber_code: list[str], send_email: bool = True) -> Response:
         """
         Cancels a subscription.
 
@@ -454,7 +432,7 @@ class Hotmart:
         return self._request_with_token(method=method, url=url, body=payload)
 
     def reactivate_and_charge_subscription(self, subscriber_code: list[str], charge: bool = False) \
-            -> Optional[Dict[str, Any]]:
+            -> Response:
         """
         Reactivates and charges a subscription.
 
@@ -477,7 +455,7 @@ class Hotmart:
         }
         return self._request_with_token(method=method, url=url, body=payload)
 
-    def change_due_day(self, subscriber_code: str, new_due_day: int) -> Optional[Dict[str, Any]]:
+    def change_due_day(self, subscriber_code: str, new_due_day: int) -> Response:
         """
         Changes the due day of a subscription.
 
@@ -492,15 +470,13 @@ class Hotmart:
 
         method = "patch"
         base_url = self._build_url('payments')
-        url = f'{base_url}/subscriptions/change-due-day'
+        url = f'{base_url}/subscriptions/{subscriber_code}'
         payload = {
-            "subscriber_code": subscriber_code,
-            "new_due_day": new_due_day
+            "due_day": new_due_day
         }
         return self._request_with_token(method=method, url=url, body=payload)
 
-    def create_coupon(self, product_id: str, coupon_code: str, discount: float) -> \
-            Optional[Dict]:
+    def create_coupon(self, product_id: str, coupon_code: str, discount: float) -> Response:
         """
         Creates a coupon for a product.
 
@@ -524,11 +500,12 @@ class Hotmart:
         }
         return self._request_with_token(method=method, url=url, body=payload)
 
-    def get_coupon(self, product_id: str) -> Optional[Dict[str, Any]]:
+    def get_coupon(self, product_id: str, code: str) -> Response:
         """
         Retrieves a coupon for a product.
 
         :param product_id: UID of the product you want to retrieve the coupon for.
+        :param code: The code of the coupon you want to retrieve.
         :return: All Coupons for the product.
         """
 
@@ -539,7 +516,10 @@ class Hotmart:
         method = "get"
         base_url = self._build_url('payments')
         url = f'{base_url}/coupon/product/{product_id}'
-        return self._request_with_token(method=method, url=url)
+        params = {
+            "code": code
+        }
+        return self._request_with_token(method=method, url=url, params=params)
 
     def delete_coupon(self, coupon_id):
         """

@@ -1,3 +1,17 @@
+0.5.0 / 2024-03-24
+==================
+
+* Changed underlying way of making requests, now standardizing the output of the response for it
+  to be always a list of dicts.
+* Added new _handle_response method for standardizing the response.
+* Added new decorator `@paginate` for handling pagination in the endpoints.
+* Removed old `_paginate` method.
+* Changed references to the old `_paginate` method to `_request_with_token`.
+* Enhanced type hints for better readability.
+* Most tests were refactored to reflect the changes in the new request handling.
+* Fixed a bug where `subscriber_code` was not being passed to the request body as expected in
+  `change_due_day` method.
+
 0.4.1 / 2024-03-22
 ==================
 
