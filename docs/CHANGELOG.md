@@ -11,6 +11,7 @@
 * Most tests were refactored to reflect the changes in the new request handling.
 * Fixed a bug where `subscriber_code` was not being passed to the request body as expected in
   `change_due_day` method.
+* Updated README with the new changes.
 
 0.4.1 / 2024-03-22
 ==================
