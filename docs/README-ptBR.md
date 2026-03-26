@@ -2,64 +2,64 @@
 
 ![Python 3.11+](https://img.shields.io/badge/python-3.11%2B-blue)
 ![PyPI version](https://img.shields.io/pypi/v/hotmart-python)
-![Licenca Apache 2.0](https://img.shields.io/badge/licenca-Apache%202.0-green)
+![Licença Apache 2.0](https://img.shields.io/badge/licen%C3%A7a-Apache%202.0-green)
 
-**hotmart-python** e um SDK Python tipado para a [API Hotmart](https://developers.hotmart.com/docs/en/).
-O [Hotmart](https://www.hotmart.com) e uma plataforma brasileira de produtos digitais — cursos, ebooks, assinaturas e areas de membros — com suporte a PIX, boleto, cartao de credito/debito e PayPal.
+**hotmart-python** é um SDK Python tipado para a [API Hotmart](https://developers.hotmart.com/docs/en/).
+O [Hotmart](https://www.hotmart.com) é uma plataforma brasileira de produtos digitais — cursos, ebooks, assinaturas e áreas de membros — com suporte a PIX, boleto, cartão de crédito/débito e PayPal.
 
-Este SDK cuida de autenticacao OAuth, refresh de token, retentativas, rate limit e paginacao automaticamente. Voce escreve regra de negocio; o SDK gerencia a API.
+Este SDK cuida de autenticação OAuth, refresh de token, retentativas, rate limit e paginação automaticamente. Você escreve regra de negócio; o SDK gerencia a API.
 
-**English documentation available at [README.md](README.md).**
+**English documentation available at [README.md](../README.md).**
 
 ---
 
 ## Recursos
 
-- **Respostas totalmente tipadas** — cada resposta da API e um modelo Pydantic v2. Seu IDE completa os campos; sem dicts crus, sem adivinhacoes.
-- **Iteradores de autopaginacao** — todo endpoint paginado tem uma variante `*_autopaginate` que percorre todas as paginas automaticamente. Um `for`, todos os registros.
-- **Gerenciamento automatico de token** — o token OAuth e obtido, armazenado em cache e renovado proativamente 5 minutos antes do vencimento. Thread-safe com double-checked locking.
-- **Retry com backoff exponencial** — erros transitorios (5xx, 429) sao reprocessados automaticamente com jitter e respeito ao `RateLimit-Reset`. Configuravel via `max_retries`.
-- **Controle proativo de rate limit** — monitora as requisicoes restantes por janela e recua antes de atingir o limite.
-- **Hierarquia de excecoes clara** — capture apenas o que interessa: `AuthenticationError`, `RateLimitError`, `NotFoundError`, `BadRequestError`, entre outros.
-- **httpx por baixo** — pool de conexoes persistente, timeouts configuráveis, suporte a gerenciador de contexto.
-- **kwargs forward-compatible** — `**kwargs` extras sao repassados diretamente como query params, permitindo usar parametros novos ou nao documentados da Hotmart sem aguardar atualizacoes do SDK.
+- **Respostas totalmente tipadas** — cada resposta da API é um modelo Pydantic v2. Seu IDE completa os campos; sem dicts crus, sem adivinhações.
+- **Iteradores de autopaginação** — todo endpoint paginado tem uma variante `*_autopaginate` que percorre todas as páginas automaticamente. Um `for`, todos os registros.
+- **Gerenciamento automático de token** — o token OAuth é obtido, armazenado em cache e renovado proativamente 5 minutos antes do vencimento. Thread-safe com double-checked locking.
+- **Retry com backoff exponencial** — erros transitórios (5xx, 429) são reprocessados automaticamente com jitter e respeito ao `RateLimit-Reset`. Configurável via `max_retries`.
+- **Controle proativo de rate limit** — monitora as requisições restantes por janela e recua antes de atingir o limite.
+- **Hierarquia de exceções clara** — capture apenas o que interessa: `AuthenticationError`, `RateLimitError`, `NotFoundError`, `BadRequestError`, entre outros.
+- **httpx por baixo** — pool de conexões persistente, timeouts configuráveis, suporte a gerenciador de contexto.
+- **kwargs forward-compatible** — `**kwargs` extras são repassados diretamente como query params, permitindo usar parâmetros novos ou não documentados da Hotmart sem aguardar atualizações do SDK.
 
 ---
 
-## Principios de Design
+## Princípios de Design
 
 - **Um objeto, todos os recursos.** Instancie `Hotmart` uma vez e acesse cada grupo de recursos como atributo: `client.sales`, `client.subscriptions`, `client.products`, etc.
-- **Falhe alto.** Erros sao excecoes tipadas, nunca suprimidos silenciosamente ou escondidos em valores de retorno.
-- **Sem boilerplate.** Autenticacao, paginacao, retentativas e gerenciamento de conexao sao invisiveis por padrao. Configuracao e opt-in.
-- **Tipagem estrita.** `mypy --strict` passa. Todas as APIs publicas sao totalmente anotadas. Modelos usam `extra="allow"` para que novos campos da API nao quebrem seu codigo.
+- **Falhe alto.** Erros são exceções tipadas, nunca suprimidos silenciosamente ou escondidos em valores de retorno.
+- **Sem boilerplate.** Autenticação, paginação, retentativas e gerenciamento de conexão são invisíveis por padrão. Configuração é opt-in.
+- **Tipagem estrita.** `mypy --strict` passa. Todas as APIs públicas são totalmente anotadas. Modelos usam `extra="allow"` para que novos campos da API não quebrem seu código.
 
 ---
 
-## Indice
+## Índice
 
-- [Instalacao](#instalacao)
-- [Inicio Rapido](#inicio-rapido)
-- [Autenticacao](#autenticacao)
+- [Instalação](#instalação)
+- [Início Rápido](#início-rápido)
+- [Autenticação](#autenticação)
 - [Recursos da API](#recursos-da-api)
   - [Vendas](#vendas)
   - [Assinaturas](#assinaturas)
   - [Produtos](#produtos)
   - [Cupons de Desconto](#cupons-de-desconto)
-  - [Club (Area de Membros)](#club-area-de-membros)
+  - [Club (Área de Membros)](#club-área-de-membros)
   - [Eventos](#eventos)
-  - [Negociacao de Parcelas](#negociacao-de-parcelas)
-- [Paginacao](#paginacao)
+  - [Negociação de Parcelas](#negociação-de-parcelas)
+- [Paginação](#paginação)
 - [Modo Sandbox](#modo-sandbox)
 - [Tratamento de Erros](#tratamento-de-erros)
 - [Logging](#logging)
 - [Gerenciador de Contexto](#gerenciador-de-contexto)
-- [Parametros Extras (kwargs)](#parametros-extras-kwargs)
+- [Parâmetros Extras (kwargs)](#parâmetros-extras-kwargs)
 - [Contribuindo](#contribuindo)
-- [Licenca](#licenca)
+- [Licença](#licença)
 
 ---
 
-## Instalacao
+## Instalação
 
 ```bash
 pip install hotmart-python
@@ -75,7 +75,7 @@ uv add hotmart-python
 
 ---
 
-## Inicio Rapido
+## Início Rápido
 
 ```python
 from hotmart import Hotmart
@@ -86,27 +86,27 @@ client = Hotmart(
     basic="Basic suas_credenciais_base64",
 )
 
-# Pagina unica
+# Página única
 pagina = client.sales.history(buyer_name="Paula")
 for venda in pagina.items:
     print(venda.purchase.transaction, venda.buyer.email)
 
-# Todas as paginas — um iterador, sem paginacao manual
+# Todas as páginas — um iterador, sem paginação manual
 for venda in client.sales.history_autopaginate(transaction_status="APPROVED"):
     print(venda.purchase.transaction)
 ```
 
 ---
 
-## Autenticacao
+## Autenticação
 
-A Hotmart utiliza **OAuth 2.0 Client Credentials**. O SDK gerencia a obtencao e o refresh do token automaticamente — voce apenas precisa fornecer tres valores na inicializacao.
+A Hotmart utiliza **OAuth 2.0 Client Credentials**. O SDK gerencia a obtenção e o refresh do token automaticamente — você apenas precisa fornecer três valores na inicialização.
 
 ### Onde encontrar suas credenciais
 
-1. Acesse o [Hotmart](https://app.hotmart.com) e faca login.
-2. Va em **Ferramentas → Ferramentas para Desenvolvedores → Credenciais**.
-3. Gere um novo conjunto de credenciais. Voce recebera:
+1. Acesse o [Hotmart](https://app.hotmart.com) e faça login.
+2. Vá em **Ferramentas → Ferramentas para Desenvolvedores → Credenciais**.
+3. Gere um novo conjunto de credenciais. Você receberá:
    - `client_id` — o ID do seu aplicativo
    - `client_secret` — o segredo do seu aplicativo
    - `basic` — a string Base64 de `client_id:client_secret` prefixada com `Basic ` (a Hotmart exibe esse valor diretamente no painel)
@@ -121,7 +121,7 @@ client = Hotmart(
 )
 ```
 
-Os tokens sao validos por 24 horas. O SDK armazena o token em cache e o renova proativamente 5 minutos antes do vencimento com thread safety, de forma que requisicoes concorrentes nunca disputem pela renovacao.
+Os tokens são válidos por 24 horas. O SDK armazena o token em cache e o renova proativamente 5 minutos antes do vencimento com thread safety, de forma que requisições concorrentes nunca disputem pela renovação.
 
 ---
 
@@ -129,10 +129,10 @@ Os tokens sao validos por 24 horas. O SDK armazena o token em cache e o renova p
 
 ### Vendas
 
-A Hotmart suporta PIX, boleto bancario, cartao de credito (parcelado ou a vista), cartao de debito, PayPal, entre outros metodos de pagamento.
+A Hotmart suporta PIX, boleto bancário, cartão de crédito (parcelado ou à vista), cartão de débito, PayPal, entre outros métodos de pagamento.
 
 ```python
-# Pagina unica
+# Página única
 pagina = client.sales.history(buyer_name="Paula", transaction_status="APPROVED")
 pagina = client.sales.summary(start_date=1700000000000, end_date=1710000000000)
 pagina = client.sales.participants(buyer_email="paula@exemplo.com.br")
@@ -142,24 +142,24 @@ pagina = client.sales.price_details(product_id=1234567)
 # Solicitar reembolso
 client.sales.refund("HP17715690036014")
 
-# Autopaginacao — percorre todas as paginas automaticamente
+# Autopaginação — percorre todas as páginas automaticamente
 for venda in client.sales.history_autopaginate(buyer_name="Paula"):
     print(venda.purchase.transaction)
 ```
 
-| Metodo | Descricao |
+| Método | Descrição |
 |--------|-----------|
-| `history(**kwargs)` | Lista todas as vendas com informacoes detalhadas |
-| `history_autopaginate(**kwargs)` | Iterador sobre todas as paginas |
-| `summary(**kwargs)` | Total de comissoes por moeda |
-| `summary_autopaginate(**kwargs)` | Iterador sobre todas as paginas |
+| `history(**kwargs)` | Lista todas as vendas com informações detalhadas |
+| `history_autopaginate(**kwargs)` | Iterador sobre todas as páginas |
+| `summary(**kwargs)` | Total de comissões por moeda |
+| `summary_autopaginate(**kwargs)` | Iterador sobre todas as páginas |
 | `participants(**kwargs)` | Dados de participantes por venda |
-| `participants_autopaginate(**kwargs)` | Iterador sobre todas as paginas |
-| `commissions(**kwargs)` | Detalhamento de comissoes por venda |
-| `commissions_autopaginate(**kwargs)` | Iterador sobre todas as paginas |
-| `price_details(**kwargs)` | Detalhes de preco e taxas por venda |
-| `price_details_autopaginate(**kwargs)` | Iterador sobre todas as paginas |
-| `refund(transaction_code)` | Solicita reembolso de uma transacao |
+| `participants_autopaginate(**kwargs)` | Iterador sobre todas as páginas |
+| `commissions(**kwargs)` | Detalhamento de comissões por venda |
+| `commissions_autopaginate(**kwargs)` | Iterador sobre todas as páginas |
+| `price_details(**kwargs)` | Detalhes de preço e taxas por venda |
+| `price_details_autopaginate(**kwargs)` | Iterador sobre todas as páginas |
+| `refund(transaction_code)` | Solicita reembolso de uma transação |
 
 ---
 
@@ -174,7 +174,7 @@ pagina = client.subscriptions.list(status="ACTIVE", product_id=1234567)
 # Resumo de assinaturas
 pagina = client.subscriptions.summary()
 
-# Compras e transacoes de um assinante especifico
+# Compras e transações de um assinante específico
 compras = client.subscriptions.purchases("SUB-ABC123")
 transacoes = client.subscriptions.transactions("SUB-ABC123")
 
@@ -184,29 +184,29 @@ resultado = client.subscriptions.cancel(["SUB-ABC123", "SUB-DEF456"], send_mail=
 # Reativar assinaturas (em lote)
 resultado = client.subscriptions.reactivate(["SUB-ABC123"], charge=False)
 
-# Reativar uma unica assinatura
+# Reativar uma única assinatura
 resultado = client.subscriptions.reactivate_single("SUB-ABC123", charge=True)
 
 # Alterar data de vencimento
 client.subscriptions.change_due_day("SUB-ABC123", due_day=15)
 
-# Autopaginacao
+# Autopaginação
 for assinante in client.subscriptions.list_autopaginate(status="ACTIVE"):
     print(assinante.subscriber_code)
 ```
 
-| Metodo | Descricao |
+| Método | Descrição |
 |--------|-----------|
 | `list(**kwargs)` | Lista assinaturas com filtros |
-| `list_autopaginate(**kwargs)` | Iterador sobre todas as paginas |
+| `list_autopaginate(**kwargs)` | Iterador sobre todas as páginas |
 | `summary(**kwargs)` | Resumo de assinaturas |
-| `summary_autopaginate(**kwargs)` | Iterador sobre todas as paginas |
-| `purchases(subscriber_code)` | Historico de compras de um assinante |
-| `transactions(subscriber_code)` | Transacoes de um assinante |
+| `summary_autopaginate(**kwargs)` | Iterador sobre todas as páginas |
+| `purchases(subscriber_code)` | Histórico de compras de um assinante |
+| `transactions(subscriber_code)` | Transações de um assinante |
 | `cancel(subscriber_code, send_mail)` | Cancela uma ou mais assinaturas |
 | `reactivate(subscriber_code, charge)` | Reativa assinaturas (em lote) |
-| `reactivate_single(subscriber_code, charge)` | Reativa uma unica assinatura |
-| `change_due_day(subscriber_code, due_day)` | Altera o dia de vencimento da cobranca |
+| `reactivate_single(subscriber_code, charge)` | Reativa uma única assinatura |
+| `change_due_day(subscriber_code, due_day)` | Altera o dia de vencimento da cobrança |
 
 ---
 
@@ -222,19 +222,19 @@ pagina = client.products.offers("ucode-do-produto")
 # Planos de um produto
 pagina = client.products.plans("ucode-do-produto")
 
-# Autopaginacao
+# Autopaginação
 for produto in client.products.list_autopaginate():
     print(produto.name)
 ```
 
-| Metodo | Descricao |
+| Método | Descrição |
 |--------|-----------|
 | `list(**kwargs)` | Lista todos os produtos |
-| `list_autopaginate(**kwargs)` | Iterador sobre todas as paginas |
+| `list_autopaginate(**kwargs)` | Iterador sobre todas as páginas |
 | `offers(ucode, **kwargs)` | Ofertas de um produto |
-| `offers_autopaginate(ucode, **kwargs)` | Iterador sobre todas as paginas |
+| `offers_autopaginate(ucode, **kwargs)` | Iterador sobre todas as páginas |
 | `plans(ucode, **kwargs)` | Planos de um produto |
-| `plans_autopaginate(ucode, **kwargs)` | Iterador sobre todas as paginas |
+| `plans_autopaginate(ucode, **kwargs)` | Iterador sobre todas as páginas |
 
 ---
 
@@ -250,29 +250,29 @@ pagina = client.coupons.list("1234567")
 # Excluir cupom por ID
 client.coupons.delete("id-do-cupom")
 
-# Autopaginacao
+# Autopaginação
 for cupom in client.coupons.list_autopaginate("1234567"):
     print(cupom.code)
 ```
 
-| Metodo | Descricao |
+| Método | Descrição |
 |--------|-----------|
 | `create(product_id, coupon_code, discount)` | Cria um cupom de desconto |
 | `list(product_id, **kwargs)` | Lista cupons de um produto |
-| `list_autopaginate(product_id, **kwargs)` | Iterador sobre todas as paginas |
+| `list_autopaginate(product_id, **kwargs)` | Iterador sobre todas as páginas |
 | `delete(coupon_id)` | Exclui um cupom |
 
 ---
 
-### Club (Area de Membros)
+### Club (Área de Membros)
 
-O recurso Club requer o argumento `subdomain` — o subdominio da sua Area de Membros.
+O recurso Club requer o argumento `subdomain` — o subdomínio da sua Área de Membros.
 
 ```python
-# Modulos da area de membros
+# Módulos da área de membros
 modulos = client.club.modules("subdominio-do-curso")
 
-# Paginas de um modulo
+# Páginas de um módulo
 paginas = client.club.pages("subdominio-do-curso", module_id="uuid-do-modulo")
 
 # Alunos matriculados
@@ -285,10 +285,10 @@ progresso = client.club.student_progress(
 )
 ```
 
-| Metodo | Descricao |
+| Método | Descrição |
 |--------|-----------|
-| `modules(subdomain, **kwargs)` | Lista modulos da area de membros |
-| `pages(subdomain, module_id, **kwargs)` | Lista paginas de um modulo |
+| `modules(subdomain, **kwargs)` | Lista módulos da área de membros |
+| `pages(subdomain, module_id, **kwargs)` | Lista páginas de um módulo |
 | `students(subdomain, **kwargs)` | Lista alunos matriculados |
 | `student_progress(subdomain, **kwargs)` | Dados de progresso dos alunos |
 
@@ -303,65 +303,65 @@ evento = client.events.get("id-do-evento")
 # Listar ingressos de um produto
 pagina = client.events.tickets(product_id=1234567)
 
-# Autopaginacao
+# Autopaginação
 for ingresso in client.events.tickets_autopaginate(product_id=1234567):
     print(ingresso.name)
 ```
 
-| Metodo | Descricao |
+| Método | Descrição |
 |--------|-----------|
 | `get(event_id)` | Retorna detalhes de um evento |
 | `tickets(product_id, **kwargs)` | Lista ingressos de um produto |
-| `tickets_autopaginate(product_id, **kwargs)` | Iterador sobre todas as paginas |
+| `tickets_autopaginate(product_id, **kwargs)` | Iterador sobre todas as páginas |
 
 ---
 
-### Negociacao de Parcelas
+### Negociação de Parcelas
 
 ```python
-# Criar negociacao de parcelas para um assinante
+# Criar negociação de parcelas para um assinante
 resultado = client.negotiation.create("SUB-ABC123")
 ```
 
-| Metodo | Descricao |
+| Método | Descrição |
 |--------|-----------|
-| `create(subscriber_code)` | Cria uma negociacao de parcelas |
+| `create(subscriber_code)` | Cria uma negociação de parcelas |
 
 ---
 
-## Paginacao
+## Paginação
 
-A API Hotmart usa paginacao baseada em cursor. Cada resposta paginada contem um objeto `page_info` com `next_page_token`.
+A API Hotmart usa paginação baseada em cursor. Cada resposta paginada contém um objeto `page_info` com `next_page_token`.
 
-### Chamada de pagina unica
+### Chamada de página única
 
 Retorna um `PaginatedResponse[T]` com `.items` e `.page_info`:
 
 ```python
 pagina = client.sales.history(max_results=50)
 print(f"Recebidos {len(pagina.items)} itens")
-print(f"Proximo token: {pagina.page_info.next_page_token}")
+print(f"Próximo token: {pagina.page_info.next_page_token}")
 
-# Buscar proxima pagina manualmente
+# Buscar próxima página manualmente
 proxima_pagina = client.sales.history(page_token=pagina.page_info.next_page_token)
 ```
 
-### Autopaginacao (recomendado)
+### Autopaginação (recomendado)
 
-Cada metodo paginado possui uma variante `*_autopaginate` que gerencia todas as paginas automaticamente:
+Cada método paginado possui uma variante `*_autopaginate` que gerencia todas as páginas automaticamente:
 
 ```python
 for venda in client.sales.history_autopaginate(buyer_name="Paula"):
     print(venda.purchase.transaction)
 ```
 
-O iterador para automaticamente quando nao ha mais paginas — sem gerenciamento de token, sem condicoes de loop.
+O iterador para automaticamente quando não há mais páginas — sem gerenciamento de token, sem condições de loop.
 
 ---
 
 ## Modo Sandbox
 
-Use `sandbox=True` para apontar todas as requisicoes para o ambiente sandbox da Hotmart. Credenciais de producao e sandbox nao sao intercambiaveis — gere as credenciais sandbox no painel da Hotmart na mesma secao de Credenciais de Desenvolvedor, selecionando "Sandbox" como ambiente.
+Use `sandbox=True` para apontar todas as requisições para o ambiente sandbox da Hotmart. Credenciais de produção e sandbox não são intercambiáveis — gere as credenciais sandbox no painel da Hotmart na mesma seção de Credenciais de Desenvolvedor, selecionando "Sandbox" como ambiente.
 
 ```python
 from hotmart import Hotmart
@@ -374,13 +374,13 @@ client = Hotmart(
 )
 ```
 
-> **Observacao:** Alguns endpoints se comportam de forma diferente ou nao sao totalmente suportados no sandbox. Consulte o [SANDBOX-GUIDE.md](SANDBOX-GUIDE.md) e o [HOTMART-API-BUGS.md](HOTMART-API-BUGS.md) para problemas conhecidos.
+> **Observação:** Alguns endpoints se comportam de forma diferente ou não são totalmente suportados no sandbox. Consulte o [SANDBOX-GUIDE.md](SANDBOX-GUIDE.md) e o [HOTMART-API-BUGS.md](HOTMART-API-BUGS.md) para problemas conhecidos.
 
 ---
 
 ## Tratamento de Erros
 
-Todos os erros do SDK herdam de `HotmartError`. Importe e capture apenas as excecoes que voce precisa:
+Todos os erros do SDK herdam de `HotmartError`. Importe e capture apenas as exceções que você precisa:
 
 ```python
 from hotmart import (
@@ -398,26 +398,26 @@ try:
 except AuthenticationError:
     print("Verifique suas credenciais.")
 except RateLimitError as e:
-    print(f"Limite de requisicoes atingido. Tente novamente em {e.retry_after} segundos.")
+    print(f"Limite de requisições atingido. Tente novamente em {e.retry_after} segundos.")
 except NotFoundError:
-    print("Recurso nao encontrado.")
+    print("Recurso não encontrado.")
 except HotmartError as e:
     print(f"Erro da API: {e}")
 ```
 
-Hierarquia de excecoes:
+Hierarquia de exceções:
 
-| Excecao | Status HTTP | Significado |
+| Exceção | Status HTTP | Significado |
 |---------|------------|-------------|
-| `AuthenticationError` | 401, 403 | Credenciais invalidas ou ausentes |
-| `BadRequestError` | 400 | Parametros invalidos |
-| `NotFoundError` | 404 | Recurso nao encontrado |
-| `RateLimitError` | 429 | Limite de requisicoes excedido (500 req/min) |
+| `AuthenticationError` | 401, 403 | Credenciais inválidas ou ausentes |
+| `BadRequestError` | 400 | Parâmetros inválidos |
+| `NotFoundError` | 404 | Recurso não encontrado |
+| `RateLimitError` | 429 | Limite de requisições excedido (500 req/min) |
 | `InternalServerError` | 500, 502, 503 | Erro interno do servidor Hotmart |
 | `APIStatusError` | outros | Status HTTP inesperado |
 | `HotmartError` | — | Classe base para todos os erros do SDK |
 
-O SDK realiza retentativas automaticas em erros transitorios (5xx, 429) com backoff exponencial (`0.5 × 2^attempt + jitter`, cap 30s). Configure via `max_retries`:
+O SDK realiza retentativas automáticas em erros transitórios (5xx, 429) com backoff exponencial (`0.5 × 2^attempt + jitter`, cap 30s). Configure via `max_retries`:
 
 ```python
 client = Hotmart(..., max_retries=5)
@@ -427,7 +427,7 @@ client = Hotmart(..., max_retries=5)
 
 ## Logging
 
-O logging e desabilitado por padrao. Habilite-o passando `log_level` na inicializacao:
+O logging é desabilitado por padrão. Habilite-o passando `log_level` na inicialização:
 
 ```python
 import logging
@@ -441,21 +441,21 @@ client = Hotmart(
 )
 ```
 
-| Nivel | O que e registrado |
+| Nível | O que é registrado |
 |-------|-------------------|
-| `logging.DEBUG` | URLs das requisicoes, parametros — **contem dados sensiveis, evite em producao** |
-| `logging.INFO` | Resumos de operacoes em alto nivel |
-| `logging.WARNING` | Avisos e condicoes inesperadas |
-| `logging.ERROR` | Erros durante interacoes com a API |
-| `logging.CRITICAL` | Falhas criticas |
+| `logging.DEBUG` | URLs das requisições, parâmetros — **contém dados sensíveis, evite em produção** |
+| `logging.INFO` | Resumos de operações em alto nível |
+| `logging.WARNING` | Avisos e condições inesperadas |
+| `logging.ERROR` | Erros durante interações com a API |
+| `logging.CRITICAL` | Falhas críticas |
 
-Tokens e credenciais sao mascarados em toda saida de log.
+Tokens e credenciais são mascarados em toda saída de log.
 
 ---
 
 ## Gerenciador de Contexto
 
-`Hotmart` suporta o protocolo de gerenciador de contexto para limpeza automatica do pool de conexoes HTTP:
+`Hotmart` suporta o protocolo de gerenciador de contexto para limpeza automática do pool de conexões HTTP:
 
 ```python
 from hotmart import Hotmart
@@ -471,12 +471,12 @@ with Hotmart(
 
 ---
 
-## Parametros Extras (kwargs)
+## Parâmetros Extras (kwargs)
 
-Todos os metodos de recursos aceitam `**kwargs` e repassam os argumentos diretamente para a API como query params. Isso permite usar parametros nao documentados ou recentemente adicionados pela Hotmart sem aguardar atualizacoes do SDK:
+Todos os métodos de recursos aceitam `**kwargs` e repassam os argumentos diretamente para a API como query params. Isso permite usar parâmetros não documentados ou recentemente adicionados pela Hotmart sem aguardar atualizações do SDK:
 
 ```python
-# Passe qualquer query param que a Hotmart suporte, mesmo sem estar na assinatura do metodo
+# Passe qualquer query param que a Hotmart suporte, mesmo sem estar na assinatura do método
 pagina = client.sales.history(parametro_novo="valor")
 ```
 
@@ -484,12 +484,12 @@ pagina = client.sales.history(parametro_novo="valor")
 
 ## Contribuindo
 
-Contribuicoes sao bem-vindas. Veja o [CONTRIBUTING-ptBR.md](CONTRIBUTING-ptBR.md) para configuracao do ambiente, estilo de codigo, como adicionar um novo endpoint e o checklist de PR.
+Contribuições são bem-vindas. Veja o [CONTRIBUTING-ptBR.md](CONTRIBUTING-ptBR.md) para configuração do ambiente, estilo de código, como adicionar um novo endpoint e o checklist de PR.
 
 ---
 
-## Licenca
+## Licença
 
 Apache License 2.0 — veja [LICENSE.txt](../LICENSE.txt) para detalhes.
 
-Este pacote nao e afiliado nem oficialmente suportado pela Hotmart.
+Este pacote não é afiliado nem oficialmente suportado pela Hotmart.

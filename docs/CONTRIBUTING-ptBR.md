@@ -1,42 +1,42 @@
 # Contribuindo com o hotmart-python
 
-Obrigado pelo interesse em contribuir! Este guia cobre tudo que voce precisa: configuracao do ambiente, execucao de testes, padroes de codigo e como adicionar um novo endpoint da API Hotmart.
+Obrigado pelo interesse em contribuir! Este guia cobre tudo que você precisa: configuração do ambiente, execução de testes, padrões de código e como adicionar um novo endpoint da API Hotmart.
 
 **English documentation available at [CONTRIBUTING.md](CONTRIBUTING.md).**
 
 ---
 
-## Indice
+## Índice
 
 - [Primeiros Passos](#primeiros-passos)
 - [Executando os Testes](#executando-os-testes)
-- [Lint e Formatacao](#lint-e-formatacao)
-- [Verificacao de Tipos](#verificacao-de-tipos)
-- [Estilo de Codigo](#estilo-de-codigo)
+- [Lint e Formatação](#lint-e-formatação)
+- [Verificação de Tipos](#verificação-de-tipos)
+- [Estilo de Código](#estilo-de-código)
 - [Como Adicionar um Novo Endpoint](#como-adicionar-um-novo-endpoint)
-- [Referencia da API](#referencia-da-api)
+- [Referência da API](#referência-da-api)
 - [Checklist de Pull Request](#checklist-de-pull-request)
 
 ---
 
 ## Primeiros Passos
 
-Este projeto usa [uv](https://github.com/astral-sh/uv) para gerenciamento de dependencias.
+Este projeto usa [uv](https://github.com/astral-sh/uv) para gerenciamento de dependências.
 
-1. Faca o fork e clone o repositorio:
+1. Faça o fork e clone o repositório:
 
 ```bash
 git clone https://github.com/im-voracity/hotmart-python.git
 cd hotmart-python
 ```
 
-2. Instale todas as dependencias (incluindo as de desenvolvimento):
+2. Instale todas as dependências (incluindo as de desenvolvimento):
 
 ```bash
 uv sync
 ```
 
-So isso. O `uv` cria e gerencia o ambiente virtual automaticamente — sem precisar configurar `venv` manualmente.
+Só isso. O `uv` cria e gerencia o ambiente virtual automaticamente — sem precisar configurar `venv` manualmente.
 
 ---
 
@@ -46,17 +46,17 @@ So isso. O `uv` cria e gerencia o ambiente virtual automaticamente — sem preci
 uv run pytest tests/ --ignore=tests/test_integration.py
 ```
 
-Para saida verbosa com tracebacks curtos:
+Para saída verbosa com tracebacks curtos:
 
 ```bash
 uv run pytest tests/ --ignore=tests/test_integration.py -v --tb=short
 ```
 
-Todos os testes unitarios usam `respx` para mockar HTTP — sem chamadas reais a API, sem necessidade de credenciais.
+Todos os testes unitários usam `respx` para mockar HTTP — sem chamadas reais à API, sem necessidade de credenciais.
 
-### Testes de integracao
+### Testes de integração
 
-Os testes de integracao rodam contra a API real da Hotmart. Sao pulados automaticamente se as credenciais nao estiverem presentes:
+Os testes de integração rodam contra a API real da Hotmart. São pulados automaticamente se as credenciais não estiverem presentes:
 
 ```bash
 # Requer HOTMART_CLIENT_ID, HOTMART_CLIENT_SECRET, HOTMART_BASIC no ambiente
@@ -64,44 +64,44 @@ set -a && source .env && set +a
 uv run pytest tests/test_integration.py -v
 ```
 
-Veja o `.env.example` para as variaveis de ambiente esperadas.
+Veja o `.env.example` para as variáveis de ambiente esperadas.
 
 ---
 
-## Lint e Formatacao
+## Lint e Formatação
 
 ```bash
 # Verificar erros de lint
 uv run ruff check src/ tests/
 
-# Corrigir automaticamente o que for possivel
+# Corrigir automaticamente o que for possível
 uv run ruff check --fix src/ tests/
 
 # Formatar
 uv run ruff format src/ tests/
 
-# Verificar formatacao sem modificar arquivos
+# Verificar formatação sem modificar arquivos
 uv run ruff format --check src/ tests/
 ```
 
 ---
 
-## Verificacao de Tipos
+## Verificação de Tipos
 
 ```bash
 uv run mypy src/hotmart/
 ```
 
-O projeto roda `mypy --strict`. Todas as APIs publicas devem ser totalmente anotadas.
+O projeto roda `mypy --strict`. Todas as APIs públicas devem ser totalmente anotadas.
 
 ---
 
-## Estilo de Codigo
+## Estilo de Código
 
 - **Sem `if` aninhados.** Use early returns e guard clauses.
-- **Early returns primeiro.** Valide entradas e trate casos de erro no inicio da funcao, antes do caminho feliz.
+- **Early returns primeiro.** Valide entradas e trate casos de erro no início da função, antes do caminho feliz.
 - **Guard clauses.** Prefira `if not x: return` em vez de `if x: <bloco grande>`.
-- **Docstrings em EN + PT-BR.** Todo metodo publico deve ter uma descricao breve em ingles seguida da traducao em portugues. Veja os metodos de recursos existentes para o padrao.
+- **Docstrings em EN + PT-BR.** Todo método público deve ter uma descrição breve em inglês seguida da tradução em português. Veja os métodos de recursos existentes para o padrão.
 
 **Preferido:**
 
@@ -130,11 +130,11 @@ def meu_metodo(self, valor: str | None) -> str:
 
 ### Passo 1 — Identifique o recurso
 
-Determine a qual grupo de recursos o endpoint pertence (`sales`, `subscriptions`, `products`, `coupons`, `club`, `events` ou `negotiation`). Se for um novo grupo, crie um novo arquivo de recurso seguindo os padroes existentes.
+Determine a qual grupo de recursos o endpoint pertence (`sales`, `subscriptions`, `products`, `coupons`, `club`, `events` ou `negotiation`). Se for um novo grupo, crie um novo arquivo de recurso seguindo os padrões existentes.
 
 ### Passo 2 — Adicione ou atualize o modelo Pydantic
 
-Adicione o modelo de resposta em `src/hotmart/models/`. Mantenha um arquivo por grupo de recursos. Use `extra="allow"` em todos os modelos para que novos campos da API nao quebrem o codigo existente:
+Adicione o modelo de resposta em `src/hotmart/models/`. Mantenha um arquivo por grupo de recursos. Use `extra="allow"` em todos os modelos para que novos campos da API não quebrem o código existente:
 
 ```python
 # src/hotmart/models/sales.py
@@ -149,9 +149,9 @@ class MeuNovoModelo(BaseModel):
 
 Exporte o novo modelo em `src/hotmart/models/__init__.py` e em `src/hotmart/__init__.py`.
 
-### Passo 3 — Adicione o metodo na classe de recurso
+### Passo 3 — Adicione o método na classe de recurso
 
-Adicione o metodo no arquivo correspondente em `src/hotmart/resources/`:
+Adicione o método no arquivo correspondente em `src/hotmart/resources/`:
 
 ```python
 # src/hotmart/resources/sales.py
@@ -169,11 +169,11 @@ def meu_novo_metodo(
     return self._get("/meu-endpoint", params=params, cast_to=PaginatedResponse[MeuNovoModelo])  # type: ignore[return-value]
 ```
 
-Se o endpoint for paginado, adicione tambem uma variante `*_autopaginate` seguindo o padrao existente.
+Se o endpoint for paginado, adicione também uma variante `*_autopaginate` seguindo o padrão existente.
 
 ### Passo 4 — Escreva os testes
 
-Adicione testes em `tests/resources/`. Siga os padroes existentes — mocke `BaseSyncClient._request` e verifique se a URL e os parametros corretos sao passados:
+Adicione testes em `tests/resources/`. Siga os padrões existentes — mocke `BaseSyncClient._request` e verifique se a URL e os parâmetros corretos são passados:
 
 ```python
 # tests/resources/test_sales.py
@@ -185,17 +185,17 @@ def test_meu_novo_metodo(client, mock_paginated_response):
     assert kwargs["params"]["algum_param"] == "valor"
 ```
 
-### Passo 5 — Atualize a documentacao
+### Passo 5 — Atualize a documentação
 
-Atualize `docs/README.md` e `docs/README-ptBR.md` para documentar o novo metodo na secao de recurso correspondente.
+Atualize `README.md` e `docs/README-ptBR.md` para documentar o novo método na seção de recurso correspondente.
 
 ---
 
-## Referencia da API
+## Referência da API
 
-O arquivo [`HOTMART-API-REFERENCE.md`](HOTMART-API-REFERENCE.md) contem uma referencia completa e legivel por maquina de todos os endpoints da API Hotmart. Ele existe porque a documentacao oficial da Hotmart e renderizada como uma SPA JavaScript e nao e acessivel por crawlers ou agentes de IA.
+O arquivo [`HOTMART-API-REFERENCE.md`](HOTMART-API-REFERENCE.md) contém uma referência completa e legível por máquina de todos os endpoints da API Hotmart. Ele existe porque a documentação oficial da Hotmart é renderizada como uma SPA JavaScript e não é acessível por crawlers ou agentes de IA.
 
-Se voce estiver implementando um novo endpoint, este arquivo e a sua referencia principal para parametros de requisicao, formatos de resposta e comportamentos conhecidos.
+Se você estiver implementando um novo endpoint, este arquivo é a sua referência principal para parâmetros de requisição, formatos de resposta e comportamentos conhecidos.
 
 ---
 
@@ -204,14 +204,14 @@ Se voce estiver implementando um novo endpoint, este arquivo e a sua referencia 
 Antes de enviar um PR, verifique:
 
 - [ ] `uv run pytest tests/ --ignore=tests/test_integration.py` passa sem falhas
-- [ ] `uv run ruff check src/ tests/` nao reporta erros
-- [ ] `uv run ruff format --check src/ tests/` nao reporta alteracoes necessarias
-- [ ] `uv run mypy src/hotmart/` nao reporta erros
+- [ ] `uv run ruff check src/ tests/` não reporta erros
+- [ ] `uv run ruff format --check src/ tests/` não reporta alterações necessárias
+- [ ] `uv run mypy src/hotmart/` não reporta erros
 - [ ] Novo endpoint coberto por ao menos um teste
-- [ ] `docs/README.md` e `docs/README-ptBR.md` atualizados se aplicavel
+- [ ] `README.md` e `docs/README-ptBR.md` atualizados se aplicável
 
 ---
 
-## Licenca
+## Licença
 
-Ao contribuir com este projeto, voce concorda que suas contribuicoes serao licenciadas sob a Apache License 2.0.
+Ao contribuir com este projeto, você concorda que suas contribuições serão licenciadas sob a Apache License 2.0.
