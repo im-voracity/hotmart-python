@@ -68,10 +68,37 @@ jobs:
         with:
           repository-url: https://test.pypi.org/legacy/
 
+  smoke-test:
+    name: Smoke test (Test PyPI)
+    runs-on: ubuntu-latest
+    needs: publish-test-pypi
+
+    steps:
+      - name: Install uv
+        uses: astral-sh/setup-uv@v4
+        with:
+          version: "latest"
+
+      - name: Install from Test PyPI
+        run: |
+          uv pip install --system \
+            --index-url https://test.pypi.org/simple/ \
+            --extra-index-url https://pypi.org/simple/ \
+            hotmart-python
+
+      - name: Smoke test
+        run: |
+          python -c "
+          import hotmart
+          print('version:', hotmart.__version__)
+          from hotmart import Hotmart
+          print('import OK')
+          "
+
   publish-pypi:
     name: Publish to PyPI
     runs-on: ubuntu-latest
-    needs: publish-test-pypi
+    needs: smoke-test
     environment: release
     permissions:
       id-token: write
