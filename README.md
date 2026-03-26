@@ -9,7 +9,11 @@
 
 This SDK handles OAuth, token refresh, retries, rate limits, and pagination automatically. You write business logic; the SDK handles the API.
 
-**Documentacao em Portugues disponivel em [README-ptBR.md](docs/README-ptBR.md).**
+**Documentação em Português disponível em [README-ptBR.md](docs/README-ptBR.md).**
+
+---
+
+> **v1.0 — rewrite completo.** Após dois anos sem atualizações, a biblioteca foi redesenhada do zero: API resource-based, `httpx`, Pydantic v2, retry automático, tipagem estrita e muito mais. É um breaking change forte em relação à v0.x — veja o [guia de migração](docs/MIGRATION.md) para atualizar. Se você está começando agora, pode ignorar esse aviso.
 
 ---
 
@@ -54,6 +58,7 @@ This SDK handles OAuth, token refresh, retries, rate limits, and pagination auto
 - [Logging](#logging)
 - [Context Manager](#context-manager)
 - [Extra Parameters (kwargs)](#extra-parameters-kwargs)
+- [Documentation](#documentation)
 - [Contributing](#contributing)
 - [License](#license)
 
@@ -475,6 +480,20 @@ All resource methods accept `**kwargs` and forward them directly to the API as q
 # Pass any query parameter Hotmart supports, even if not in the method signature
 page = client.sales.history(some_new_param="value")
 ```
+
+---
+
+## Documentation
+
+| Document | Description |
+|----------|-------------|
+| [README-ptBR.md](docs/README-ptBR.md) | Esta documentação em Português |
+| [MIGRATION.md](docs/MIGRATION.md) | Upgrading from v0.x to v1.0 — breaking changes and method mapping |
+| [CHANGELOG.md](docs/CHANGELOG.md) | Full version history |
+| [CONTRIBUTING.md](docs/CONTRIBUTING.md) | Development setup, code style, how to add endpoints |
+| [SANDBOX-GUIDE.md](docs/SANDBOX-GUIDE.md) | Sandbox environment usage and known limitations |
+| [HOTMART-API-BUGS.md](docs/HOTMART-API-BUGS.md) | Known Hotmart API bugs found during integration testing |
+| [HOTMART-API-REFERENCE.md](docs/HOTMART-API-REFERENCE.md) | Complete API reference (agent/LLM-friendly — official docs are a JS SPA) |
 
 ---
 

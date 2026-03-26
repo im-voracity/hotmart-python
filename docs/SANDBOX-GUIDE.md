@@ -83,6 +83,18 @@ These endpoints have limited sandbox support. Behavior may vary.
 
 ---
 
+## Known Issues
+
+### `sandbox.hotmart.com` has no DNS record
+
+During integration testing, we found that `sandbox.hotmart.com` does not resolve — the host has no DNS entry. This means all requests with `sandbox=True` will fail with a connection error at the DNS resolution stage, regardless of credentials.
+
+This is a Hotmart infrastructure issue, not an SDK bug. It is documented in [`HOTMART-API-BUGS.md`](HOTMART-API-BUGS.md).
+
+As a workaround, test against production with low-value or throwaway data, or use the SDK's unit test suite (which mocks all HTTP) to validate your integration logic.
+
+---
+
 ## Tips for Sandbox Testing
 
 - Use the `sales.history()` and `subscriptions.list()` endpoints to verify your authentication and basic connectivity.
