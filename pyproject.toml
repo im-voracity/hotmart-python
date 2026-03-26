@@ -5,7 +5,7 @@ description = "Python SDK for the Hotmart API"
 authors = [{ name = "Matheus Tenório", email = "matheusct16@gmail.com" }]
 license = { text = "Apache-2.0" }
 readme = "docs/README.md"
-requires-python = ">=3.10"
+requires-python = ">=3.11"
 dependencies = [
     "httpx>=0.27,<1",
     "pydantic>=2.0,<3",
@@ -29,13 +29,13 @@ packages = ["src/hotmart"]
 
 [tool.ruff]
 line-length = 120
-target-version = "py310"
+target-version = "py311"
 
 [tool.ruff.lint]
 select = ["E", "F", "I", "UP", "B", "SIM"]
 
 [tool.mypy]
-python_version = "3.10"
+python_version = "3.11"
 strict = true
 
 [tool.pytest.ini_options]
