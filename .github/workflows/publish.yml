@@ -81,14 +81,15 @@ jobs:
 
       - name: Install from Test PyPI
         run: |
-          uv pip install --system \
+          uv venv .venv
+          uv pip install --python .venv/bin/python \
             --index-url https://test.pypi.org/simple/ \
             --extra-index-url https://pypi.org/simple/ \
             hotmart-python
 
       - name: Smoke test
         run: |
-          python -c "
+          .venv/bin/python -c "
           import hotmart
           print('version:', hotmart.__version__)
           from hotmart import Hotmart
