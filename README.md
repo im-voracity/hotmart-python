@@ -13,7 +13,7 @@ This SDK handles OAuth, token refresh, retries, rate limits, and pagination auto
 
 ---
 
-> **v1.0 — rewrite completo.** Após dois anos sem atualizações, a biblioteca foi redesenhada do zero: API resource-based, `httpx`, Pydantic v2, retry automático, tipagem estrita e muito mais. É um breaking change forte em relação à v0.x — veja o [guia de migração](docs/MIGRATION.md) para atualizar. Se você está começando agora, pode ignorar esse aviso.
+> **v1.0 — complete rewrite.** After two years without updates, the library was redesigned from scratch: resource-based API, `httpx`, Pydantic v2, automatic retries, strict typing, and much more. This is a strong breaking change from v0.x — see the [migration guide](docs/MIGRATION.md) to update your code. If you're starting fresh, you can ignore this notice.
 
 ---
 
