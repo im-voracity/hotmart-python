@@ -6,6 +6,19 @@ O formato segue [Keep a Changelog](https://keepachangelog.com/en/1.0.0/) e o pro
 
 ---
 
+## [1.0.2] - 2026-03-26
+
+Versão de manutenção com melhorias de documentação. Nenhuma mudança no código da biblioteca.
+
+### Changed
+
+- Aviso de breaking change da v1.0 adicionado ao README
+- Seção de documentação com tabela de todos os docs adicionada ao README
+- CHANGELOG reescrito com narrativa e contexto histórico
+- SANDBOX-GUIDE atualizado com bug conhecido do DNS (`sandbox.hotmart.com`)
+
+---
+
 ## [1.0.1] - 2026-03-26
 
 Versão de manutenção com melhorias de documentação. Nenhuma mudança no código da biblioteca.
