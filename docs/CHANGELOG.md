@@ -6,6 +6,14 @@ O formato segue [Keep a Changelog](https://keepachangelog.com/en/1.0.0/) e o pro
 
 ---
 
+## [1.0.3] - 2026-03-26
+
+### Fixed
+
+- Smoke test no pipeline de publish corrigido (PEP 668 — usar venv em vez de `--system`)
+
+---
+
 ## [1.0.2] - 2026-03-26
 
 Versão de manutenção com melhorias de documentação. Nenhuma mudança no código da biblioteca.

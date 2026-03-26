@@ -1,6 +1,6 @@
 [project]
 name = "hotmart-python"
-version = "1.0.2"
+version = "1.0.3"
 description = "Python SDK for the Hotmart API"
 authors = [{ name = "Matheus Tenório", email = "matheusct16@gmail.com" }]
 license = { text = "Apache-2.0" }
