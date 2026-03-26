@@ -1,32 +1,37 @@
-# Hotmart Python
+# hotmart-python — Python SDK for the Hotmart API
 
-This is a Python Wrapper for the Hotmart API, which allows you to interact with resources offered by
-the platform:
+![Python 3.10+](https://img.shields.io/badge/python-3.10%2B-blue)
+![PyPI version](https://img.shields.io/pypi/v/hotmart-python)
+![License Apache 2.0](https://img.shields.io/badge/license-Apache%202.0-green)
 
-**Nota**: A documentação em português está disponível [aqui](README-ptBR.md).
+A typed Python SDK for the [Hotmart API](https://developers.hotmart.com/docs/en/). Covers all 7 resource groups, automatic token refresh, exponential backoff retries, proactive rate limit tracking, and paginating iterators.
+
+**Documentacao em Portugues disponivel em [README-ptBR.md](README-ptBR.md).**
+
+---
 
 ## Table of Contents
 
-- [Features](#features)
 - [Installation](#installation)
-- [Usage](#usage)
-    - [Usage example 1](#usage-example-1)
-    - [Logs](#logs)
-    - [Sandbox](#sandbox)
-    - [Usage example 2](#usage-example-2)
-    - [Pagination](#pagination)
-- [Supported Parameters](#supported-parameters)
-- [API Reference](#api-reference)
-- [Contributing](#contributing)
+- [Quick Start](#quick-start)
+- [Authentication](#authentication)
+- [Resources](#resources)
+  - [Sales](#sales)
+  - [Subscriptions](#subscriptions)
+  - [Products](#products)
+  - [Coupons](#coupons)
+  - [Club (Members Area)](#club-members-area)
+  - [Events](#events)
+  - [Negotiation](#negotiation)
+- [Pagination](#pagination)
+- [Sandbox Mode](#sandbox-mode)
+- [Error Handling](#error-handling)
+- [Logging](#logging)
+- [Context Manager](#context-manager)
+- [Extra Parameters (kwargs)](#extra-parameters-kwargs)
 - [License](#license)
 
-## Features:
-
-- ✅ Authentication
-- ✅ Pagination
-- ✅ All sales endpoints
-- ✅ All subscriptions endpoints
-- ✅ All coupons endpoints
+---
 
 ## Installation
 
@@ -34,233 +39,440 @@ the platform:
 pip install hotmart-python
 ```
 
-## Usage
+Or with [uv](https://github.com/astral-sh/uv):
 
-### Usage example 1:
-
-Here's how you can use the Hotmart Python Wrapper in your Python code:
-
-```python
-from hotmart_python import Hotmart
-
-# Initialize the Hotmart client
-hotmart = Hotmart(client_id='your_client_id',
-                  client_secret='your_client_secret',
-                  basic='your_basic_token')
-
-# Example usage: Get sales history
-sales_history = hotmart.get_sales_history()
-print(sales_history)
+```bash
+uv add hotmart-python
 ```
 
-### Logs:
+---
 
-By default, logging is disabled. You can enable it and set the log level by passing the `log_level`
-parameter when initializing the Hotmart object. The available log levels are:
+## Quick Start
 
-- ️️☣️ `logging.DEBUG`: Debug level logging, which includes detailed information such as request
-  URLs and parameters
-  (**not recommended for production use due to sensitive information being logged**).
-- `logging.INFO`: Information level logging, which provides basic information about the operations
-  being performed.
-- `logging.WARNING`: Warning level logging, which indicates potential issues or unexpected behavior.
-- `logging.ERROR`: Error level logging, which indicates errors that occur during API interactions.
-- `logging.CRITICAL`: Critical level logging, which indicates critical errors that require immediate
-  attention.
+```python
+from hotmart import Hotmart
+
+client = Hotmart(
+    client_id="your_client_id",
+    client_secret="your_client_secret",
+    basic="Basic your_base64_credentials",
+)
+
+page = client.sales.history(buyer_name="Paula")
+for sale in page.items:
+    print(sale.purchase.transaction, sale.buyer.email)
+```
+
+---
+
+## Authentication
+
+Hotmart uses **OAuth 2.0 Client Credentials**. The SDK handles token acquisition and refresh automatically — you only need to supply three values at startup.
+
+### Where to find your credentials
+
+1. Log in to [Hotmart](https://app.hotmart.com).
+2. Go to **Tools → Developer Tools → Credentials** (also called the Developer Credentials section).
+3. Generate a new credential set. You will receive:
+   - `client_id` — your application client ID
+   - `client_secret` — your application client secret
+   - `basic` — the Base64-encoded string `client_id:client_secret`, prefixed with `Basic ` (Hotmart shows this value directly in the dashboard)
+
+```python
+from hotmart import Hotmart
+
+client = Hotmart(
+    client_id="abcdef12-1234-5678-abcd-abcdef123456",
+    client_secret="your_secret_here",
+    basic="Basic YWJjZGVmMTItMTIzNC01Njc4LWFiY2QtYWJjZGVmMTIzNDU2OnlvdXJfc2VjcmV0X2hlcmU=",
+)
+```
+
+Tokens are valid for 24 hours. The SDK caches the token and proactively refreshes it before expiry using double-checked locking (thread-safe).
+
+---
+
+## Resources
+
+### Sales
+
+```python
+# Single page
+page = client.sales.history(buyer_name="Paula", transaction_status="APPROVED")
+page = client.sales.summary(start_date=1700000000000, end_date=1710000000000)
+page = client.sales.participants(buyer_email="paula@example.com")
+page = client.sales.commissions(commission_as="PRODUCER")
+page = client.sales.price_details(product_id=1234567)
+
+# Refund a transaction
+client.sales.refund("HP17715690036014")
+
+# Autopaginate (iterator — yields individual items across all pages)
+for sale in client.sales.history_autopaginate(buyer_name="Paula"):
+    print(sale.purchase.transaction)
+```
+
+Available methods:
+
+| Method | Description |
+|--------|-------------|
+| `history(**kwargs)` | List all sales with detailed information |
+| `history_autopaginate(**kwargs)` | Iterator over all pages |
+| `summary(**kwargs)` | Total commission values per currency |
+| `summary_autopaginate(**kwargs)` | Iterator over all pages |
+| `participants(**kwargs)` | Sales user/participant data |
+| `participants_autopaginate(**kwargs)` | Iterator over all pages |
+| `commissions(**kwargs)` | Commission breakdown per sale |
+| `commissions_autopaginate(**kwargs)` | Iterator over all pages |
+| `price_details(**kwargs)` | Price and fee details per sale |
+| `price_details_autopaginate(**kwargs)` | Iterator over all pages |
+| `refund(transaction_code)` | Request a refund for a transaction |
+
+---
+
+### Subscriptions
+
+```python
+# List subscribers
+page = client.subscriptions.list(status="ACTIVE", product_id=1234567)
+
+# Summary
+page = client.subscriptions.summary()
+
+# Purchases and transactions for a single subscriber
+purchases = client.subscriptions.purchases("SUB-ABC123")
+transactions = client.subscriptions.transactions("SUB-ABC123")
+
+# Cancel one or more subscriptions
+result = client.subscriptions.cancel(["SUB-ABC123", "SUB-DEF456"], send_mail=True)
+
+# Reactivate subscriptions (bulk)
+result = client.subscriptions.reactivate(["SUB-ABC123"], charge=False)
+
+# Reactivate a single subscription
+result = client.subscriptions.reactivate_single("SUB-ABC123", charge=True)
+
+# Change due day
+client.subscriptions.change_due_day("SUB-ABC123", due_day=15)
+
+# Autopaginate
+for sub in client.subscriptions.list_autopaginate(status="ACTIVE"):
+    print(sub.subscriber_code)
+```
+
+Available methods:
+
+| Method | Description |
+|--------|-------------|
+| `list(**kwargs)` | List subscriptions with filters |
+| `list_autopaginate(**kwargs)` | Iterator over all pages |
+| `summary(**kwargs)` | Subscription summary |
+| `summary_autopaginate(**kwargs)` | Iterator over all pages |
+| `purchases(subscriber_code)` | Purchase history for a subscriber |
+| `transactions(subscriber_code)` | Transactions for a subscriber |
+| `cancel(subscriber_code, send_mail)` | Cancel one or more subscriptions |
+| `reactivate(subscriber_code, charge)` | Reactivate subscriptions (bulk) |
+| `reactivate_single(subscriber_code, charge)` | Reactivate a single subscription |
+| `change_due_day(subscriber_code, due_day)` | Change the billing due day |
+
+---
+
+### Products
+
+```python
+# List products
+page = client.products.list(status="ACTIVE")
+
+# Offers for a product
+page = client.products.offers("product-ucode-here")
+
+# Plans for a product
+page = client.products.plans("product-ucode-here")
+
+# Autopaginate
+for product in client.products.list_autopaginate():
+    print(product.name)
+```
+
+Available methods:
+
+| Method | Description |
+|--------|-------------|
+| `list(**kwargs)` | List all products |
+| `list_autopaginate(**kwargs)` | Iterator over all pages |
+| `offers(ucode, **kwargs)` | Offers for a product |
+| `offers_autopaginate(ucode, **kwargs)` | Iterator over all pages |
+| `plans(ucode, **kwargs)` | Plans for a product |
+| `plans_autopaginate(ucode, **kwargs)` | Iterator over all pages |
+
+---
+
+### Coupons
+
+```python
+# Create a coupon (10% off) for product 1234567
+client.coupons.create("1234567", "SUMMER10", discount=10.0)
+
+# List coupons for a product
+page = client.coupons.list("1234567")
+
+# Delete a coupon by ID
+client.coupons.delete("coupon-id-here")
+
+# Autopaginate
+for coupon in client.coupons.list_autopaginate("1234567"):
+    print(coupon.code)
+```
+
+Available methods:
+
+| Method | Description |
+|--------|-------------|
+| `create(product_id, coupon_code, discount)` | Create a discount coupon |
+| `list(product_id, **kwargs)` | List coupons for a product |
+| `list_autopaginate(product_id, **kwargs)` | Iterator over all pages |
+| `delete(coupon_id)` | Delete a coupon |
+
+---
+
+### Club (Members Area)
+
+The Club resource requires a `subdomain` argument — the subdomain of your Members Area.
+
+```python
+# Modules in the members area
+modules = client.club.modules("my-course-subdomain")
+
+# Pages within a module
+pages = client.club.pages("my-course-subdomain", module_id="module-uuid")
+
+# Students enrolled
+students = client.club.students("my-course-subdomain")
+
+# Student progress
+progress = client.club.student_progress(
+    "my-course-subdomain",
+    student_email="student@example.com",
+)
+```
+
+Available methods:
+
+| Method | Description |
+|--------|-------------|
+| `modules(subdomain, **kwargs)` | List modules in the members area |
+| `pages(subdomain, module_id, **kwargs)` | List pages in a module |
+| `students(subdomain, **kwargs)` | List enrolled students |
+| `student_progress(subdomain, **kwargs)` | Student progress data |
+
+---
+
+### Events
+
+```python
+# Get event details
+event = client.events.get("event-id-here")
+
+# List tickets for a product
+page = client.events.tickets(product_id=1234567)
+
+# Autopaginate
+for ticket in client.events.tickets_autopaginate(product_id=1234567):
+    print(ticket.name)
+```
+
+Available methods:
+
+| Method | Description |
+|--------|-------------|
+| `get(event_id)` | Get event details |
+| `tickets(product_id, **kwargs)` | List tickets for a product |
+| `tickets_autopaginate(product_id, **kwargs)` | Iterator over all pages |
+
+---
+
+### Negotiation
+
+```python
+# Create an installment negotiation for a subscriber
+result = client.negotiation.create("SUB-ABC123")
+```
+
+Available methods:
+
+| Method | Description |
+|--------|-------------|
+| `create(subscriber_code)` | Create an installment negotiation |
+
+---
+
+## Pagination
+
+The Hotmart API uses cursor-based pagination. Each paginated response contains a `page_info` object with `next_page_token`.
+
+### Single-page call
+
+Returns a `PaginatedResponse[T]` with `.items` and `.page_info`:
+
+```python
+page = client.sales.history(max_results=50)
+print(f"Got {len(page.items)} items")
+print(f"Next token: {page.page_info.next_page_token}")
+
+# Manually fetch next page
+next_page = client.sales.history(page_token=page.page_info.next_page_token)
+```
+
+### Autopaginate (recommended)
+
+Every paginated method has a matching `*_autopaginate` variant that returns an iterator and handles all page-fetching automatically:
+
+```python
+for sale in client.sales.history_autopaginate(buyer_name="Paula"):
+    print(sale.purchase.transaction)
+```
+
+The iterator stops when there are no more pages.
+
+---
+
+## Sandbox Mode
+
+Use `sandbox=True` to point all requests at Hotmart's sandbox environment. You need **separate sandbox credentials** — sandbox and production credentials are not interchangeable.
+
+Generate sandbox credentials in the Hotmart dashboard under the same Developer Credentials section, selecting "Sandbox" as the environment.
+
+```python
+from hotmart import Hotmart
+
+client = Hotmart(
+    client_id="your_sandbox_client_id",
+    client_secret="your_sandbox_client_secret",
+    basic="Basic your_sandbox_base64_credentials",
+    sandbox=True,
+)
+
+page = client.sales.history()
+```
+
+Note: Some endpoints behave differently or are not fully supported in the sandbox environment. See [SANDBOX-GUIDE.md](SANDBOX-GUIDE.md) for details.
+
+---
+
+## Error Handling
+
+All SDK errors inherit from `HotmartError`. Import and catch the specific exceptions you need:
+
+```python
+from hotmart import (
+    Hotmart,
+    HotmartError,
+    AuthenticationError,
+    RateLimitError,
+    NotFoundError,
+    BadRequestError,
+    InternalServerError,
+)
+
+client = Hotmart(
+    client_id="...",
+    client_secret="...",
+    basic="Basic ...",
+)
+
+try:
+    page = client.sales.history()
+except AuthenticationError:
+    print("Check your credentials.")
+except RateLimitError as e:
+    print(f"Rate limited. Retry after {e.retry_after} seconds.")
+except NotFoundError:
+    print("Resource not found.")
+except HotmartError as e:
+    print(f"API error: {e}")
+```
+
+Exception hierarchy:
+
+| Exception | HTTP status | Meaning |
+|-----------|------------|---------|
+| `AuthenticationError` | 401, 403 | Invalid or missing credentials |
+| `BadRequestError` | 400 | Invalid parameters |
+| `NotFoundError` | 404 | Resource not found |
+| `RateLimitError` | 429 | Rate limit exceeded (500 req/min) |
+| `InternalServerError` | 500, 502, 503 | Hotmart server error |
+| `APIStatusError` | other | Unexpected HTTP status |
+| `HotmartError` | — | Base class for all SDK errors |
+
+The SDK automatically retries on transient errors (5xx, 429) with exponential backoff. Configure the retry count via `max_retries`:
+
+```python
+client = Hotmart(..., max_retries=5)
+```
+
+---
+
+## Logging
+
+Logging is disabled by default. Enable it by passing `log_level` at construction time:
 
 ```python
 import logging
-from hotmart_python import Hotmart
+from hotmart import Hotmart
 
-# Initialize the Hotmart client
-hotmart = Hotmart(client_id='your_client_id',
-                  client_secret='your_client_secret',
-                  basic='your_basic_token',
-                  log_level=logging.INFO)
+client = Hotmart(
+    client_id="...",
+    client_secret="...",
+    basic="Basic ...",
+    log_level=logging.INFO,
+)
 ```
 
-The parameter log_level can be omitted, and if done, it will fall back to the default log level,
-which is `logging.WARNING`.
+Available log levels:
 
-### Sandbox:
+| Level | What is logged |
+|-------|---------------|
+| `logging.DEBUG` | Request URLs, parameters (contains sensitive data — avoid in production) |
+| `logging.INFO` | High-level operation summaries |
+| `logging.WARNING` | Warnings and unexpected conditions (default) |
+| `logging.ERROR` | Errors during API interactions |
+| `logging.CRITICAL` | Critical failures |
 
-It is also possible to use the `sandbox` parameter to enable the sandbox environment, which can only
-be accessed if previously generated credentials targeting sandbox mode are generated inside Hotmart.
-By default, e sandbox environment is disabled.
+Secrets (tokens, credentials) are masked in log output.
+
+---
+
+## Context Manager
+
+`Hotmart` supports the context manager protocol for automatic cleanup of the underlying HTTP connection pool:
 
 ```python
-import logging
-from hotmart_python import Hotmart
+from hotmart import Hotmart
 
-# Initialize the Hotmart client
-hotmart = Hotmart(client_id='your_sandbox_client_id',
-                  client_secret='your_sandbox_client_secret',
-                  basic='your_sandbox_basic_token',
-                  log_level=logging.INFO,
-                  sandbox=True)
+with Hotmart(
+    client_id="...",
+    client_secret="...",
+    basic="Basic ...",
+) as client:
+    for sale in client.sales.history_autopaginate():
+        print(sale.purchase.transaction)
 ```
 
-### Usage example 2:
+---
 
-Usage example for getting sales history with logging enabled and log level set to INFO and using
-query filters to get sales by buyer email:
+## Extra Parameters (kwargs)
+
+All resource methods accept `**kwargs` and pass extra keyword arguments directly to the API as query parameters. This lets you use undocumented or newly added parameters without waiting for an SDK update:
 
 ```python
-from hotmart_python import Hotmart
-import logging
-
-# Initialize the Hotmart client with logging enabled and log level set to DEBUG
-hotmart = Hotmart(client_id='your_client_id',
-                  client_secret='your_client_secret',
-                  basic='your_basic',
-                  log_level=logging.INFO)
-
-# Example usage: Get sales history
-sales_history = hotmart.get_sales_history(buyer_email='johndoe@example.com')
-print(sales_history)
+# Pass any query parameter Hotmart supports, even if not in the method signature
+page = client.sales.history(some_future_param="value")
 ```
 
-### Pagination:
-
-By default, pagination is disabled. If you want to enable pagination, you can use de `paginate`
-decorator, there are two ways of doing it.
-
-The first one (and simplest) is to use the decorator in a wrapper function
-
-```python
-from hotmart_python import Hotmart
-from hotmart_python.decorators import paginate
-
-hotmart = Hotmart(client_id='your_client_id',
-                  client_secret='your_client_secret',
-                  basic='your_basic')
-
-
-@paginate
-def get_sales_history(*args, **kwargs):
-    return hotmart.get_sales_history(*args, **kwargs)
-
-
-print(get_sales_history())
-```
-
-The second one, it's a one-liner lambda function
-
-```python
-from hotmart_python import Hotmart
-from hotmart_python.decorators import paginate
-
-hotmart = Hotmart(client_id='your_client_id',
-                  client_secret='your_client_secret',
-                  basic='your_basic')
-
-get_sales_history = paginate(lambda *args, **kwargs: hotmart.get_sales_history(*args, **kwargs))
-print(get_sales_history())
-```
-
-## Supported Parameters
-
-These are the supported parameters for all methods that interact with the Hotmart API:
-
-- `kwargs`: Any queries that are supported by the endpoint. For example, the `get_sales_history`
-  method supports the
-  following parameters:
-    - `max_results` (int): The maximum number of items per page that can be returned.
-    - `product_id` (int): Unique identifier (ID) of the product sold (7-digit number).
-    - `start_date` (int): Start date of the filter period. The date must be in milliseconds,
-      starting from 1970-01-01
-      00:00:00 UTC.
-    - `end_date` (int): End date of the filter period. The date must be in milliseconds, starting
-      from 1970-01-01 00:00:
-      00 UTC.
-    - `sales_source` (str): SRC code used in the link on the product payment page to track the
-      origin. (
-      E.g., `pay.hotmart.com/B00000000T?src=campaignname`)
-    - `buyer_name` (str): Buyer Name.
-    - `buyer_email` (str): Email address of the buyer. You can use this information to search for
-      specific purchases.
-    - `product_id` (str): The ID of the product.
-    - `transaction` (str): Unique reference code for a transaction, e.g., HP17715690036014. A
-      transaction happens when
-      an order is placed. An order can be a bank payment slip generated, an approved purchase, a
-      recurring payment, and
-      more.
-    - `transaction_status` (str): The status of the sale (e.g. 'approved', 'pending', 'refunded', '
-      canceled', '
-      chargeback').
-    - And others.
-
-For more information about queries, please refer to
-the [Hotmart API documentation](https://developers.hotmart.com/docs/en/). Any query parameter that
-is supported by the
-endpoint can be passed as a keyword argument to the method.
-
-## API Reference
-
-Here's a brief overview of the methods available in the `Hotmart` class:
-
-- `get_sales_history(**kwargs)`: Retrieves the sales history. Accepts optional keyword arguments for
-  filtering the
-  results. [Reference](https://developers.hotmart.com/docs/en/v1/sales/sales-history/)
-
-- `get_sales_summary(**kwargs)`: Retrieves the sales summary. Accepts optional keyword arguments for
-  filtering the
-  results. [Reference](https://developers.hotmart.com/docs/en/v1/sales/sales-summary/)
-
-- `get_sales_participants(**kwargs)`: Retrieves the sales participants. Accepts optional keyword
-  arguments for filtering
-  the results. [Reference](https://developers.hotmart.com/docs/en/v1/sales/sales-users/)
-
-- `get_sales_commissions(**kwargs)`: Retrieves the sales commissions. Accepts optional keyword
-  arguments for filtering
-  the results. [Reference](https://developers.hotmart.com/docs/en/v1/sales/sales-commissions/)
-
-- `get_sales_price_details(**kwargs)`: Retrieves the sales price details. Accepts optional keyword
-  arguments for
-  filtering the
-  results. [Reference](https://developers.hotmart.com/docs/en/v1/sales/sales-price-details/)
-
-- `get_subscriptions(paginate=False, **kwargs)`: Retrieves the subscriptions. Accepts an
-  optional `paginate` argument
-  and additional keyword arguments for filtering the
-  results. [Reference](https://developers.hotmart.com/docs/en/v1/subscription/get-subscribers/)
-
-- `get_subscription_summary(paginate=False, **kwargs)`: Retrieves the subscription summary. Accepts
-  an
-  optional `paginate` argument and additional keyword arguments for filtering the
-  results. [Reference](https://developers.hotmart.com/docs/en/v1/subscription/get-subscription-summary/)
-
-- `get_subscription_purchases(subscriber_code, paginate=False, **kwargs)`: Retrieves the
-  subscription purchases for a
-  specific subscriber. Requires a `subscriber_code` argument and accepts an optional `paginate`
-  argument and additional
-  keyword arguments for filtering the
-  results. [Reference](https://developers.hotmart.com/docs/en/v1/subscription/get-subscription-purchases/)
-
-- `cancel_subscription(subscriber_code, send_email=True)`: Cancels a subscription. Requires
-  a `subscriber_code` argument
-  and accepts an optional `send_email`
-  argument. [Reference](https://developers.hotmart.com/docs/en/v1/subscription/cancel-subscriptions/)
-
-- `reactivate_and_charge_subscription(subscriber_code, charge=True)`: Reactivates and charges a
-  subscription. Requires
-  a `subscriber_code` argument and accepts an optional `charge`
-  argument. [Reference](https://developers.hotmart.com/docs/en/v1/subscription/reactivate-subscription/)
-
-For more detailed information about these methods and the parameters they accept, please refer to
-the source code or the
-[official Hotmart API documentation](https://developers.hotmart.com/docs/en/).
-
-## Contributing
-
-Contributions are welcome! If you find any issues or have suggestions for improvement, please open
-an issue or submit a
-pull request on the GitHub repository.
+---
 
 ## License
 
-This project is licensed under the Apache License 2.0 - see the [LICENSE](../LICENSE.txt) file for
-details.
+Apache License 2.0 — see [LICENSE.txt](../LICENSE.txt) for details.
 
-This package is not affiliated with Hotmart. It is an open-source project that is not officially
-supported by Hotmart.
+This package is not affiliated with or officially supported by Hotmart.
