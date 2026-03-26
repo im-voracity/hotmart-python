@@ -40,3 +40,6 @@ strict = true
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
+markers = [
+    "integration: testes contra a API real da Hotmart (requer credenciais)",
+]

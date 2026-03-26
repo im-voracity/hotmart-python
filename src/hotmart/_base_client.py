@@ -1,11 +1,14 @@
 from __future__ import annotations
+
 import time
 import uuid
 from typing import Any, TypeVar
+
 import httpx
-from ._config import ClientConfig, BASE_URLS
+
 from ._auth import TokenManager
-from ._exceptions import AuthenticationError, make_status_error
+from ._config import BASE_URLS, ClientConfig
+from ._exceptions import make_status_error
 from ._logging import HotmartLogger
 from ._rate_limit import RateLimitTracker
 from ._retry import get_retry_delay, is_retryable
@@ -33,7 +36,7 @@ class BaseSyncClient:
         self._logger = HotmartLogger(config.log_level)
         self._http = httpx.Client(timeout=config.timeout, verify=True)
 
-    def __enter__(self) -> "BaseSyncClient":
+    def __enter__(self) -> BaseSyncClient:
         return self
 
     def __exit__(self, *_: Any) -> None:
@@ -84,7 +87,10 @@ class BaseSyncClient:
             return response.json()  # type: ignore[return-value]
 
         if not response.content or response.content == b"{}":
-            return None
+            # Hotmart bug: some endpoints (e.g. /coupon/product/{id}) return HTTP 200
+            # with empty body instead of {"items": []}. Fall back to empty model.
+            # Bug Hotmart: alguns endpoints retornam HTTP 200 com body vazio em vez de {"items": []}.
+            return cast_to.model_validate({})  # type: ignore[union-attr]
 
         return cast_to.model_validate(response.json())  # type: ignore[union-attr]
 
