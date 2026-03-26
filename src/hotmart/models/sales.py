@@ -1,6 +1,7 @@
 from __future__ import annotations
-from ._common import _Base, Price
-from ._enums import PurchaseStatus, PaymentType, CommissionSource
+
+from ._common import Price, _Base
+from ._enums import CommissionSource, PaymentType, PurchaseStatus
 
 
 class SaleProduct(_Base):

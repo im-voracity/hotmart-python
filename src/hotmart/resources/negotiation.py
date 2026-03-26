@@ -1,6 +1,7 @@
 from __future__ import annotations
-from ._base import APIResource
+
 from ..models.negotiation import NegotiationResponse
+from ._base import APIResource
 
 
 class Negotiation(APIResource):

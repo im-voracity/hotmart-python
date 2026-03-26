@@ -1,9 +1,9 @@
 import httpx
-import respx
 import pytest
+
 from hotmart._base_client import BaseSyncClient, _build_params
 from hotmart._config import ClientConfig
-from hotmart._exceptions import AuthenticationError, RateLimitError, InternalServerError
+from hotmart._exceptions import AuthenticationError, InternalServerError, RateLimitError
 
 TOKEN_URL = "https://api-sec-vlc.hotmart.com/security/oauth/token"
 BASE = "https://developers.hotmart.com/payments/api/v1"

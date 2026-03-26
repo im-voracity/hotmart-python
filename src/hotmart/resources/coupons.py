@@ -1,9 +1,11 @@
 from __future__ import annotations
+
 from collections.abc import Iterator
 from typing import Any
-from ._base import APIResource
-from ..models.pagination import PaginatedResponse
+
 from ..models.coupons import CouponItem
+from ..models.pagination import PaginatedResponse
+from ._base import APIResource
 
 
 class Coupons(APIResource):

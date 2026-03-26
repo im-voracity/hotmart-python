@@ -1,5 +1,6 @@
 import httpx
 import pytest
+
 from hotmart import Hotmart
 
 TOKEN_URL = "https://api-sec-vlc.hotmart.com/security/oauth/token"

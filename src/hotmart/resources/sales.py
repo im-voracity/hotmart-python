@@ -1,14 +1,19 @@
 from __future__ import annotations
+
 from collections.abc import Iterator
 from typing import Any
-from ._base import APIResource
+
 from .._base_client import _build_params
+from ..models._enums import CommissionSource, PaymentType, PurchaseStatus
 from ..models.pagination import PaginatedResponse
 from ..models.sales import (
-    SaleHistoryItem, SaleSummaryItem, SaleParticipantsItem,
-    SaleCommissionsItem, SalePriceDetailsItem,
+    SaleCommissionsItem,
+    SaleHistoryItem,
+    SaleParticipantsItem,
+    SalePriceDetailsItem,
+    SaleSummaryItem,
 )
-from ..models._enums import PurchaseStatus, PaymentType, CommissionSource
+from ._base import APIResource
 
 
 class Sales(APIResource):

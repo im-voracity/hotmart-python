@@ -1,4 +1,5 @@
 import logging
+
 from hotmart._logging import HotmartLogger, mask_sensitive
 
 

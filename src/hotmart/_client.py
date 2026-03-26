@@ -1,14 +1,16 @@
 from __future__ import annotations
+
 import logging
+
 from ._base_client import BaseSyncClient
 from ._config import ClientConfig
-from .resources.sales import Sales
-from .resources.subscriptions import Subscriptions
-from .resources.products import Products
-from .resources.coupons import Coupons
 from .resources.club import Club
+from .resources.coupons import Coupons
 from .resources.events import Events
 from .resources.negotiation import Negotiation
+from .resources.products import Products
+from .resources.sales import Sales
+from .resources.subscriptions import Subscriptions
 
 
 class Hotmart(BaseSyncClient):

@@ -1,6 +1,6 @@
 import httpx
-import respx
 import pytest
+
 from hotmart._base_client import BaseSyncClient
 from hotmart._config import ClientConfig
 from hotmart.resources.products import Products

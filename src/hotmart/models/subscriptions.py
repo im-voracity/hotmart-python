@@ -1,6 +1,7 @@
 from __future__ import annotations
-from ._common import _Base, Price
-from ._enums import SubscriptionStatus, PaymentType
+
+from ._common import Price, _Base
+from ._enums import PaymentType, SubscriptionStatus
 
 
 class SubPlan(_Base):

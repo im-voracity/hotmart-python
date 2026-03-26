@@ -1,6 +1,9 @@
 from __future__ import annotations
+
 from typing import Generic, TypeVar
+
 from pydantic import BaseModel, ConfigDict
+
 from ._common import PageInfo
 
 T = TypeVar("T")

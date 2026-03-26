@@ -1,5 +1,7 @@
 from __future__ import annotations
+
 import random
+
 import httpx
 
 RETRYABLE_STATUS_CODES = frozenset({429, 500, 502, 503})

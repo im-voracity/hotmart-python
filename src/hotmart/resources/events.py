@@ -1,10 +1,12 @@
 from __future__ import annotations
+
 from collections.abc import Iterator
 from typing import Any
-from ._base import APIResource
+
 from .._base_client import _build_params
-from ..models.pagination import PaginatedResponse
 from ..models.events import EventItem, TicketItem
+from ..models.pagination import PaginatedResponse
+from ._base import APIResource
 
 
 class Events(APIResource):

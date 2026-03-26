@@ -1,9 +1,13 @@
 import httpx
-import pytest
+
 from hotmart._exceptions import (
+    APIStatusError,
+    AuthenticationError,
+    BadRequestError,
     HotmartError,
-    AuthenticationError, BadRequestError, NotFoundError,
-    RateLimitError, InternalServerError, APIStatusError,
+    InternalServerError,
+    NotFoundError,
+    RateLimitError,
     make_status_error,
 )
 

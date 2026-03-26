@@ -1,10 +1,9 @@
 import httpx
-import respx
 import pytest
+
 from hotmart._base_client import BaseSyncClient
 from hotmart._config import ClientConfig
 from hotmart.resources.subscriptions import Subscriptions
-from hotmart.models.subscriptions import SubscriptionItem, SubscriptionBulkResponse
 
 TOKEN_URL = "https://api-sec-vlc.hotmart.com/security/oauth/token"
 BASE = "https://developers.hotmart.com/payments/api/v1"

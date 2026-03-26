@@ -1,11 +1,10 @@
 import httpx
-import respx
 import pytest
+
 from hotmart._base_client import BaseSyncClient
 from hotmart._config import ClientConfig
-from hotmart.resources.sales import Sales
 from hotmart.models.pagination import PaginatedResponse
-from hotmart.models.sales import SaleHistoryItem, SaleSummaryItem
+from hotmart.resources.sales import Sales
 
 TOKEN_URL = "https://api-sec-vlc.hotmart.com/security/oauth/token"
 BASE = "https://developers.hotmart.com/payments/api/v1"

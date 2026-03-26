@@ -1,10 +1,9 @@
 import httpx
-import respx
 import pytest
+
 from hotmart._base_client import BaseSyncClient
 from hotmart._config import ClientConfig
 from hotmart.resources.club import Club
-from hotmart.models.club import ModuleItem
 
 TOKEN_URL = "https://api-sec-vlc.hotmart.com/security/oauth/token"
 CLUB_BASE = "https://developers.hotmart.com/club/api/v1"

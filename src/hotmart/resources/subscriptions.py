@@ -1,14 +1,19 @@
 from __future__ import annotations
+
 from collections.abc import Iterator
 from typing import Any
-from ._base import APIResource
+
 from .._base_client import _build_params
+from ..models._enums import SubscriptionStatus
 from ..models.pagination import PaginatedResponse
 from ..models.subscriptions import (
-    SubscriptionItem, SubscriptionSummaryItem, SubscriptionPurchase,
-    SubscriptionBulkResponse, SubscriptionResult,
+    SubscriptionBulkResponse,
+    SubscriptionItem,
+    SubscriptionPurchase,
+    SubscriptionResult,
+    SubscriptionSummaryItem,
 )
-from ..models._enums import SubscriptionStatus
+from ._base import APIResource
 
 
 class Subscriptions(APIResource):

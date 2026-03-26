@@ -1,8 +1,11 @@
 from __future__ import annotations
+
 import threading
 import time
+
 import httpx
-from ._config import ClientConfig, AUTH_URL
+
+from ._config import AUTH_URL, ClientConfig
 
 _REFRESH_BUFFER = 300  # refresh 5 min before expiry
 

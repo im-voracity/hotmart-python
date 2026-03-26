@@ -1,4 +1,5 @@
 from __future__ import annotations
+
 from ._common import _Base
 
 
