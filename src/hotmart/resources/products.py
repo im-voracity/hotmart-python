@@ -1,11 +1,13 @@
 from __future__ import annotations
+
 from collections.abc import Iterator
 from typing import Any
-from ._base import APIResource
+
 from .._base_client import _build_params
+from ..models._enums import ProductFormat, ProductStatus
 from ..models.pagination import PaginatedResponse
-from ..models.products import ProductItem, OfferItem, PlanItem
-from ..models._enums import ProductStatus, ProductFormat
+from ..models.products import OfferItem, PlanItem, ProductItem
+from ._base import APIResource
 
 
 class Products(APIResource):
@@ -42,7 +44,9 @@ class Products(APIResource):
     ) -> PaginatedResponse[OfferItem]:
         params = _build_params(locals())
         params.pop("ucode", None)
-        return self._get(f"/products/{ucode}/offers", api_domain="products", params=params, cast_to=PaginatedResponse[OfferItem])  # type: ignore[return-value]
+        return self._get(  # type: ignore[return-value]
+            f"/products/{ucode}/offers", api_domain="products", params=params, cast_to=PaginatedResponse[OfferItem]
+        )
 
     def offers_autopaginate(self, ucode: str, **kwargs: Any) -> Iterator[OfferItem]:
         page_token: str | None = None
@@ -63,7 +67,9 @@ class Products(APIResource):
     ) -> PaginatedResponse[PlanItem]:
         params = _build_params(locals())
         params.pop("ucode", None)
-        return self._get(f"/products/{ucode}/plans", api_domain="products", params=params, cast_to=PaginatedResponse[PlanItem])  # type: ignore[return-value]
+        return self._get(  # type: ignore[return-value]
+            f"/products/{ucode}/plans", api_domain="products", params=params, cast_to=PaginatedResponse[PlanItem]
+        )
 
     def plans_autopaginate(self, ucode: str, **kwargs: Any) -> Iterator[PlanItem]:
         page_token: str | None = None

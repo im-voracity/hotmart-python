@@ -1,8 +1,9 @@
-import time
 import threading
+import time
+
 import httpx
-import respx
 import pytest
+
 from hotmart._auth import TokenManager
 from hotmart._config import ClientConfig
 
@@ -72,7 +73,9 @@ def test_concurrent_calls_fetch_token_once(manager, respx_mock):
     def fetch():
         tokens.append(manager.get_token())
     threads = [threading.Thread(target=fetch) for _ in range(10)]
-    for t in threads: t.start()
-    for t in threads: t.join()
+    for t in threads:
+        t.start()
+    for t in threads:
+        t.join()
     assert respx_mock.calls.call_count == 1
     assert all(tok == tokens[0] for tok in tokens)

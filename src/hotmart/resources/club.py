@@ -1,7 +1,9 @@
 from __future__ import annotations
+
 from typing import Any
-from ._base import APIResource
+
 from ..models.club import ModuleItem, PageItem, StudentItem, StudentProgress
+from ._base import APIResource
 
 
 class Club(APIResource):
@@ -42,7 +44,9 @@ class Club(APIResource):
             return []
         return [StudentItem.model_validate(item) for item in data]
 
-    def student_progress(self, subdomain: str, *, student_email: str | None = None, **kwargs: Any) -> list[StudentProgress]:
+    def student_progress(
+        self, subdomain: str, *, student_email: str | None = None, **kwargs: Any
+    ) -> list[StudentProgress]:
         """Return progress data for students in the given subdomain.
 
         Retorna dados de progresso dos alunos no subdomínio informado.
