@@ -5,41 +5,34 @@ on:
   pull_request:
     branches:
       - master
+  push:
+    branches:
+      - master
 
 jobs:
   test-lint:
     name: Test and Lint
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        python-version: ["3.11", "3.12", "3.13"]
+
     steps:
-      - name: Checkout code
-        id: checkout
-        uses: actions/checkout@v2
+      - uses: actions/checkout@v4
 
-      - name: Setup Python
-        id: python
-        uses: actions/setup-python@v4
+      - name: Install uv
+        uses: astral-sh/setup-uv@v4
         with:
-          python-version: "3.9"
+          version: "latest"
 
-      - name: Install Poetry
-        uses: snok/install-poetry@v1.3.4
-        with:
-          virtualenvs-create: true
-          virtualenvs-in-project: true
+      - name: Set up Python ${{ matrix.python-version }}
+        run: uv python install ${{ matrix.python-version }}
 
       - name: Install dependencies
-        id: install
-        run: |
-          poetry install --no-interaction --all-extras
+        run: uv sync --all-groups
 
-      - name: Run tests
-        id: tests
-        run: |
-          poetry run python -m unittest discover -s tests
-        if: steps.install.outcome == 'success'
+      - name: Lint (ruff)
+        run: uv run ruff check .
 
-      - name: Run flake8
-        id: flake8
-        run: |
-          poetry run flake8
-        if: steps.install.outcome == 'success'
+      - name: Unit tests
+        run: uv run pytest tests/ --ignore=tests/test_integration.py -v

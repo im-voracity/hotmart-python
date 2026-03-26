@@ -1,34 +1,115 @@
-# Hotmart Sandbox Mode Usage Guide
+# Sandbox Guide
 
-The Hotmart API provides a Sandbox mode for testing purposes. This guide will help you understand
-the particularities of some methods when used in Sandbox mode.
+The Hotmart API provides a sandbox environment for testing your integration without affecting production data. All sandbox data is fictional.
 
-Although the Hotmart API provides a Sandbox mode, some methods may not work as expected. This is
-because the API does not support some methods, or they not work as expected for Sandbox
-mode. This guide will help you understand which methods are not supported in the Sandbox mode.
+---
 
-For all subscriptions methods that need a `subscriber_code`, please note that the Sandbox API
-DOES provide some codes that should, in theory, work, and you can find them at the bottom of some
-pages in the API Reference. However, that's not true, at least at the time of the last update for
-this library.
+## Getting Sandbox Credentials
 
-The same happens to the discount coupons methods.
+Sandbox credentials are separate from production credentials and must be generated specifically for the sandbox environment.
 
-Usually, you'll find errors ranging from `404 Not Found` to `500 Internal Server Error`.
-This is only for the Sandbox environment. The production environment should work as expected.
+1. Log in to [Hotmart](https://app.hotmart.com).
+2. Go to **Tools → Developer Tools → Credentials**.
+3. Click to generate a new credential set and select **Sandbox** as the environment.
+4. You will receive a separate set of `client_id`, `client_secret`, and `basic` values for sandbox.
 
-Below there are a list of methods that currently are not working as expeceted in Sandbox Mode.
+These credentials only work against the sandbox base URL (`sandbox.hotmart.com`). Do not use production credentials with `sandbox=True` or vice versa.
 
-`get_subscription_purchases`
+---
 
-`cancel_subscription`
+## Enabling Sandbox Mode
 
-`reactivate_and_charge_subscription`
+Pass `sandbox=True` when constructing the client:
 
-`change_due_day`
+```python
+from hotmart import Hotmart
 
-`create_coupon`
+client = Hotmart(
+    client_id="your_sandbox_client_id",
+    client_secret="your_sandbox_client_secret",
+    basic="Basic your_sandbox_base64_credentials",
+    sandbox=True,
+)
 
-`get_coupon`
+# All requests now go to sandbox.hotmart.com
+page = client.sales.history()
+```
 
-`delete_coupon`
+When `sandbox=True`, the SDK replaces `developers.hotmart.com` with `sandbox.hotmart.com` across all API domains (payments, club, products).
+
+---
+
+## Endpoint Behavior in Sandbox
+
+Most read endpoints (GET) work as expected in sandbox and return fictional data. The following endpoints have known issues in the sandbox environment and may return `404 Not Found` or `500 Internal Server Error`:
+
+### Subscriptions
+
+| Method | Sandbox status |
+|--------|---------------|
+| `subscriptions.list()` | Works |
+| `subscriptions.summary()` | Works |
+| `subscriptions.purchases(subscriber_code)` | May not work — 404 errors reported |
+| `subscriptions.transactions(subscriber_code)` | May not work |
+| `subscriptions.cancel(subscriber_code)` | May not work — 500 errors reported |
+| `subscriptions.reactivate(subscriber_code)` | May not work |
+| `subscriptions.reactivate_single(subscriber_code)` | May not work |
+| `subscriptions.change_due_day(subscriber_code, day)` | May not work |
+
+The sandbox API does provide some sample `subscriber_code` values in the API reference pages, but these do not reliably work as expected at the time of writing.
+
+### Coupons
+
+| Method | Sandbox status |
+|--------|---------------|
+| `coupons.list(product_id)` | May not work |
+| `coupons.create(product_id, code, discount)` | May not work |
+| `coupons.delete(coupon_id)` | May not work |
+
+### Sales
+
+| Method | Sandbox status |
+|--------|---------------|
+| `sales.history()` | Works |
+| `sales.summary()` | Works |
+| `sales.participants()` | Works |
+| `sales.commissions()` | Works |
+| `sales.price_details()` | Works |
+| `sales.refund(transaction_code)` | Untested |
+
+### Products / Club / Events / Negotiation
+
+These endpoints have limited sandbox support. Behavior may vary.
+
+---
+
+## Tips for Sandbox Testing
+
+- Use the `sales.history()` and `subscriptions.list()` endpoints to verify your authentication and basic connectivity.
+- Do not rely on sandbox for write operation testing (cancel, reactivate, create coupon) — test the happy path in production with real but low-value data, or use mocks in your test suite.
+- Sandbox errors are environmental — they do not indicate bugs in the SDK.
+
+---
+
+## Switching Between Environments
+
+You can maintain two client instances:
+
+```python
+from hotmart import Hotmart
+
+production_client = Hotmart(
+    client_id="prod_client_id",
+    client_secret="prod_client_secret",
+    basic="Basic prod_base64",
+)
+
+sandbox_client = Hotmart(
+    client_id="sandbox_client_id",
+    client_secret="sandbox_client_secret",
+    basic="Basic sandbox_base64",
+    sandbox=True,
+)
+```
+
+Never use production credentials with `sandbox=True` or sandbox credentials without `sandbox=True`.

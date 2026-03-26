@@ -1,65 +1,84 @@
-0.5.0 / 2024-03-24
-==================
+# Changelog
 
-* Changed underlying way of making requests, now standardizing the output of the response for it
-  to be always a list of dicts.
-* Added new _handle_response method for standardizing the response.
-* Added new decorator `@paginate` for handling pagination in the endpoints.
-* Removed old `_paginate` method.
-* Changed references to the old `_paginate` method to `_request_with_token`.
-* Enhanced type hints for better readability.
-* Most tests were refactored to reflect the changes in the new request handling.
-* Fixed a bug where `subscriber_code` was not being passed to the request body as expected in
-  `change_due_day` method.
-* Updated README with the new changes.
+All notable changes to this project will be documented in this file.
 
-0.4.1 / 2024-03-22
-==================
+The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
+and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-* Better error handling for _make_request.
-* Removed custom exceptions.
-* Changed tests to better fit exceptions changes.
+---
 
-0.4.0 / 2024-03-21
-==================
+## [1.0.0] - 2026-03-26
 
-* New endpoint added: Discount Coupons
-* Added tests for the new endpoint
-* Added code examples for Sandbox testing
+### Added
 
-0.3.0 / 2024-03-21
-==================
+- Resource-based API: `client.sales`, `client.subscriptions`, `client.products`, `client.coupons`, `client.club`, `client.events`, `client.negotiation`
+- All 27 Hotmart API endpoints across 7 resource groups
+- Pydantic v2 models with `extra="allow"` for forward compatibility with new API fields
+- Automatic token refresh with double-checked locking (thread-safe)
+- Exponential backoff retry on transient errors (configurable `max_retries`, default 3)
+- Proactive rate limit tracking (500 calls/min window)
+- Structured logging with secret masking (`log_level` parameter)
+- Pagination iterators: every paginated method has a matching `*_autopaginate` variant
+- Sandbox mode via `sandbox=True` constructor flag
+- Context manager support (`with Hotmart(...) as client:`)
+- `**kwargs` passthrough for undocumented or future API parameters
+- Full typed return values using Pydantic models
+- Custom exception hierarchy: `HotmartError`, `AuthenticationError`, `BadRequestError`, `NotFoundError`, `RateLimitError`, `InternalServerError`, `APIStatusError`
 
-* **Breaking change**: Removed support for python <3.9 due to the use of flake8
-  for linting.
-* Added .editorconfig file for better code standardization.
-* Code slightly refactored to comply with flake8.
-* Added GitHub Actions for Testing and Linting.
+### Changed
 
-0.2.2 / 2024-03-21
-==================
+- Migrated HTTP client from `requests` to `httpx`
+- Migrated project tooling from `poetry` to `uv` + `hatchling`
+- Resource-based API replaces flat method names on the `Hotmart` class
+- Import path changed from `hotmart_python` to `hotmart`
+- `cancel_subscription` now takes a list of subscriber codes (bulk operation)
+- Package name on PyPI remains `hotmart-python`
 
-* Refactored helper methods for better error handling
-* Refactored tests to reflect the changes in the helper methods
-* Changed _pagination output to return a list of dicts instead a list of lists.
-* Removed unnecessary setup.py file.
+### Removed
 
-0.2.1 / 2024-03-20
-==================
+- `enhance` parameter (all methods)
+- `coloredlogs` dependency
+- `@paginate` decorator (replaced by `*_autopaginate` methods)
+- Flat class-level method names (`get_sales_history`, `get_subscriptions`, etc.)
 
-* Added subscriptions endpoint
-* Added tests for subscriptions
-* Changed _get_with_token and _post_with_token methods to use the new _request_with_token for more
-  flexibility
-* Fixed issue with pagination
-* Updated docs for the new subscriptions endpoint
-* Renamed README.dev.md to CONTRIBUTING.md, for better standardization
-* Changed get_sales_users to get_sales_participants to better reflect the endpoint's name in
-  the [API Reference](https://developers.hotmart.com/docs/en/v1/sales/sales-users/)
-* Changed tests references to the updated name of the get_sales_participants
-* Migrated to Poetry for dependency management.
+---
 
-0.1.20 / 2024
-==================
+## [0.5.0] - 2024-03-24
 
-* Test releases
+- Changed underlying request handling to always return a list of dicts
+- Added `_handle_response` for standardized response output
+- Added `@paginate` decorator for pagination
+- Removed old `_paginate` method
+- Fixed `subscriber_code` not passed correctly in `change_due_day`
+- Enhanced type hints
+
+## [0.4.1] - 2024-03-22
+
+- Better error handling in `_make_request`
+- Removed custom exceptions
+- Updated tests
+
+## [0.4.0] - 2024-03-21
+
+- Added Discount Coupons endpoint
+- Added sandbox code examples
+
+## [0.3.0] - 2024-03-21
+
+- Dropped Python <3.9 support
+- Added flake8 linting and GitHub Actions
+
+## [0.2.2] - 2024-03-21
+
+- Refactored helper methods for error handling
+- Fixed pagination output to return list of dicts
+
+## [0.2.1] - 2024-03-20
+
+- Added subscriptions endpoint
+- Renamed `get_sales_users` to `get_sales_participants`
+- Migrated to Poetry
+
+## [0.1.20] - 2024
+
+- Initial test releases
