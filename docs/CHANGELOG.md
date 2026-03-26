@@ -7,6 +7,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [1.0.1] - 2026-03-26
+
+### Changed
+
+- Moved full README to repository root for correct rendering on GitHub and PyPI
+- Rewrote README with features section, design principles, and improved DX documentation
+- Added CONTRIBUTING.md (EN) and CONTRIBUTING-ptBR.md (PT-BR)
+- Renamed `HOTMART_API.md` to `docs/HOTMART-API-REFERENCE.md`
+
+---
+
 ## [1.0.0] - 2026-03-26
 
 ### Added
