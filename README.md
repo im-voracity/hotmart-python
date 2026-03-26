@@ -1,6 +1,10 @@
 # hotmart-python
 
-Python SDK for the Hotmart API. See [docs/README.md](docs/README.md) for full documentation.
+Python SDK for the Hotmart API. See the full documentation below.
+
+- [English docs](docs/README.md)
+- [Documentacao em Portugues](docs/README-ptBR.md)
+- [Contributing](docs/CONTRIBUTING.md) | [Contribuindo](docs/CONTRIBUTING-ptBR.md)
 
 ## Quick Install
 
@@ -25,8 +29,7 @@ client = Hotmart(
     basic="Basic your_base64_credentials",
 )
 
-for sale in client.sales.history_autopaginate(buyer_name="Paula"):
-    print(sale.purchase.transaction)
+# All sales, all pages — one iterator
+for sale in client.sales.history_autopaginate(transaction_status="APPROVED"):
+    print(sale.purchase.transaction, sale.buyer.email)
 ```
-
-See [English docs](docs/README.md) | [Documentacao em Portugues](docs/README-ptBR.md)

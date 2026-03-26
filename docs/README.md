@@ -1,12 +1,37 @@
 # hotmart-python — Python SDK for the Hotmart API
 
-![Python 3.10+](https://img.shields.io/badge/python-3.10%2B-blue)
+![Python 3.11+](https://img.shields.io/badge/python-3.11%2B-blue)
 ![PyPI version](https://img.shields.io/pypi/v/hotmart-python)
 ![License Apache 2.0](https://img.shields.io/badge/license-Apache%202.0-green)
 
-A typed Python SDK for the [Hotmart API](https://developers.hotmart.com/docs/en/). Covers all 7 resource groups, automatic token refresh, exponential backoff retries, proactive rate limit tracking, and paginating iterators.
+**hotmart-python** is a typed Python SDK for the [Hotmart API](https://developers.hotmart.com/docs/en/).
+[Hotmart](https://www.hotmart.com) is a Brazilian digital products platform for selling courses, ebooks, subscriptions, and memberships — supporting payments via PIX, boleto, credit/debit card, and PayPal.
+
+This SDK handles OAuth, token refresh, retries, rate limits, and pagination automatically. You write business logic; the SDK handles the API.
 
 **Documentacao em Portugues disponivel em [README-ptBR.md](README-ptBR.md).**
+
+---
+
+## Features
+
+- **Fully typed responses** — every API response is a Pydantic v2 model. Your IDE completes field names; no raw dicts, no guessing.
+- **Autopaginate iterators** — every paginated endpoint ships a `*_autopaginate` variant that transparently walks all pages. One `for` loop, all records.
+- **Automatic token management** — OAuth token is acquired, cached, and proactively refreshed 5 minutes before expiry. Thread-safe with double-checked locking.
+- **Retry with exponential backoff** — transient errors (5xx, 429) are retried automatically with jitter and `RateLimit-Reset` awareness. Configurable via `max_retries`.
+- **Proactive rate limit tracking** — monitors remaining requests per window and backs off before hitting the limit.
+- **Clean exception hierarchy** — catch only what you care about: `AuthenticationError`, `RateLimitError`, `NotFoundError`, `BadRequestError`, and more.
+- **httpx under the hood** — persistent connection pool, configurable timeouts, context manager support.
+- **Forward-compatible kwargs** — extra `**kwargs` are passed directly as query params, so you can use undocumented or newly added Hotmart parameters without waiting for an SDK update.
+
+---
+
+## Design Principles
+
+- **One object, all resources.** Instantiate `Hotmart` once and access every resource group as an attribute: `client.sales`, `client.subscriptions`, `client.products`, etc.
+- **Fail loudly.** Errors are typed exceptions, never silently swallowed or buried in return values.
+- **No boilerplate.** Authentication, pagination, retries, and connection management are invisible by default. Opt in to configuration only when you need it.
+- **Strict typing.** `mypy --strict` passes. All public APIs are fully annotated. Models use `extra="allow"` so new API fields don't break your code.
 
 ---
 
@@ -29,6 +54,7 @@ A typed Python SDK for the [Hotmart API](https://developers.hotmart.com/docs/en/
 - [Logging](#logging)
 - [Context Manager](#context-manager)
 - [Extra Parameters (kwargs)](#extra-parameters-kwargs)
+- [Contributing](#contributing)
 - [License](#license)
 
 ---
@@ -45,6 +71,8 @@ Or with [uv](https://github.com/astral-sh/uv):
 uv add hotmart-python
 ```
 
+**Requirements:** Python 3.11+
+
 ---
 
 ## Quick Start
@@ -58,9 +86,14 @@ client = Hotmart(
     basic="Basic your_base64_credentials",
 )
 
+# Single page
 page = client.sales.history(buyer_name="Paula")
 for sale in page.items:
     print(sale.purchase.transaction, sale.buyer.email)
+
+# All pages — one iterator, no manual pagination
+for sale in client.sales.history_autopaginate(transaction_status="APPROVED"):
+    print(sale.purchase.transaction)
 ```
 
 ---
@@ -72,11 +105,11 @@ Hotmart uses **OAuth 2.0 Client Credentials**. The SDK handles token acquisition
 ### Where to find your credentials
 
 1. Log in to [Hotmart](https://app.hotmart.com).
-2. Go to **Tools → Developer Tools → Credentials** (also called the Developer Credentials section).
+2. Go to **Tools → Developer Tools → Credentials**.
 3. Generate a new credential set. You will receive:
    - `client_id` — your application client ID
    - `client_secret` — your application client secret
-   - `basic` — the Base64-encoded string `client_id:client_secret`, prefixed with `Basic ` (Hotmart shows this value directly in the dashboard)
+   - `basic` — the Base64-encoded `client_id:client_secret` string prefixed with `Basic ` (Hotmart shows this value directly in the dashboard)
 
 ```python
 from hotmart import Hotmart
@@ -88,7 +121,7 @@ client = Hotmart(
 )
 ```
 
-Tokens are valid for 24 hours. The SDK caches the token and proactively refreshes it before expiry using double-checked locking (thread-safe).
+Tokens are valid for 24 hours. The SDK caches the token and proactively refreshes it 5 minutes before expiry using double-checked locking, so concurrent requests never race on token renewal.
 
 ---
 
@@ -107,12 +140,10 @@ page = client.sales.price_details(product_id=1234567)
 # Refund a transaction
 client.sales.refund("HP17715690036014")
 
-# Autopaginate (iterator — yields individual items across all pages)
+# Autopaginate — iterates all pages automatically
 for sale in client.sales.history_autopaginate(buyer_name="Paula"):
     print(sale.purchase.transaction)
 ```
-
-Available methods:
 
 | Method | Description |
 |--------|-------------|
@@ -152,15 +183,13 @@ result = client.subscriptions.reactivate(["SUB-ABC123"], charge=False)
 # Reactivate a single subscription
 result = client.subscriptions.reactivate_single("SUB-ABC123", charge=True)
 
-# Change due day
+# Change billing due day
 client.subscriptions.change_due_day("SUB-ABC123", due_day=15)
 
 # Autopaginate
 for sub in client.subscriptions.list_autopaginate(status="ACTIVE"):
     print(sub.subscriber_code)
 ```
-
-Available methods:
 
 | Method | Description |
 |--------|-------------|
@@ -194,8 +223,6 @@ for product in client.products.list_autopaginate():
     print(product.name)
 ```
 
-Available methods:
-
 | Method | Description |
 |--------|-------------|
 | `list(**kwargs)` | List all products |
@@ -223,8 +250,6 @@ client.coupons.delete("coupon-id-here")
 for coupon in client.coupons.list_autopaginate("1234567"):
     print(coupon.code)
 ```
-
-Available methods:
 
 | Method | Description |
 |--------|-------------|
@@ -256,8 +281,6 @@ progress = client.club.student_progress(
 )
 ```
 
-Available methods:
-
 | Method | Description |
 |--------|-------------|
 | `modules(subdomain, **kwargs)` | List modules in the members area |
@@ -281,8 +304,6 @@ for ticket in client.events.tickets_autopaginate(product_id=1234567):
     print(ticket.name)
 ```
 
-Available methods:
-
 | Method | Description |
 |--------|-------------|
 | `get(event_id)` | Get event details |
@@ -297,8 +318,6 @@ Available methods:
 # Create an installment negotiation for a subscriber
 result = client.negotiation.create("SUB-ABC123")
 ```
-
-Available methods:
 
 | Method | Description |
 |--------|-------------|
@@ -325,22 +344,20 @@ next_page = client.sales.history(page_token=page.page_info.next_page_token)
 
 ### Autopaginate (recommended)
 
-Every paginated method has a matching `*_autopaginate` variant that returns an iterator and handles all page-fetching automatically:
+Every paginated method has a matching `*_autopaginate` variant that handles all page-fetching transparently:
 
 ```python
 for sale in client.sales.history_autopaginate(buyer_name="Paula"):
     print(sale.purchase.transaction)
 ```
 
-The iterator stops when there are no more pages.
+The iterator stops when there are no more pages — no token management, no loop conditions.
 
 ---
 
 ## Sandbox Mode
 
-Use `sandbox=True` to point all requests at Hotmart's sandbox environment. You need **separate sandbox credentials** — sandbox and production credentials are not interchangeable.
-
-Generate sandbox credentials in the Hotmart dashboard under the same Developer Credentials section, selecting "Sandbox" as the environment.
+Use `sandbox=True` to point all requests at Hotmart's sandbox environment. Sandbox and production credentials are not interchangeable — generate sandbox credentials in the Hotmart dashboard under the same Developer Credentials section, selecting "Sandbox" as the environment.
 
 ```python
 from hotmart import Hotmart
@@ -351,17 +368,15 @@ client = Hotmart(
     basic="Basic your_sandbox_base64_credentials",
     sandbox=True,
 )
-
-page = client.sales.history()
 ```
 
-Note: Some endpoints behave differently or are not fully supported in the sandbox environment. See [SANDBOX-GUIDE.md](SANDBOX-GUIDE.md) for details.
+> **Note:** Some endpoints behave differently or are not fully supported in the sandbox. See [SANDBOX-GUIDE.md](SANDBOX-GUIDE.md) and [HOTMART-API-BUGS.md](HOTMART-API-BUGS.md) for known issues.
 
 ---
 
 ## Error Handling
 
-All SDK errors inherit from `HotmartError`. Import and catch the specific exceptions you need:
+All SDK errors inherit from `HotmartError`. Import and catch only the exceptions you need:
 
 ```python
 from hotmart import (
@@ -372,12 +387,6 @@ from hotmart import (
     NotFoundError,
     BadRequestError,
     InternalServerError,
-)
-
-client = Hotmart(
-    client_id="...",
-    client_secret="...",
-    basic="Basic ...",
 )
 
 try:
@@ -404,7 +413,7 @@ Exception hierarchy:
 | `APIStatusError` | other | Unexpected HTTP status |
 | `HotmartError` | — | Base class for all SDK errors |
 
-The SDK automatically retries on transient errors (5xx, 429) with exponential backoff. Configure the retry count via `max_retries`:
+The SDK retries automatically on transient errors (5xx, 429) with exponential backoff (`0.5 × 2^attempt + jitter`, cap 30s). Configure via `max_retries`:
 
 ```python
 client = Hotmart(..., max_retries=5)
@@ -428,17 +437,15 @@ client = Hotmart(
 )
 ```
 
-Available log levels:
-
 | Level | What is logged |
 |-------|---------------|
-| `logging.DEBUG` | Request URLs, parameters (contains sensitive data — avoid in production) |
+| `logging.DEBUG` | Request URLs, parameters — **contains sensitive data, avoid in production** |
 | `logging.INFO` | High-level operation summaries |
-| `logging.WARNING` | Warnings and unexpected conditions (default) |
+| `logging.WARNING` | Warnings and unexpected conditions |
 | `logging.ERROR` | Errors during API interactions |
 | `logging.CRITICAL` | Critical failures |
 
-Secrets (tokens, credentials) are masked in log output.
+Tokens and credentials are masked in all log output.
 
 ---
 
@@ -462,12 +469,18 @@ with Hotmart(
 
 ## Extra Parameters (kwargs)
 
-All resource methods accept `**kwargs` and pass extra keyword arguments directly to the API as query parameters. This lets you use undocumented or newly added parameters without waiting for an SDK update:
+All resource methods accept `**kwargs` and forward them directly to the API as query parameters. This lets you use undocumented or recently added Hotmart parameters without waiting for an SDK update:
 
 ```python
 # Pass any query parameter Hotmart supports, even if not in the method signature
-page = client.sales.history(some_future_param="value")
+page = client.sales.history(some_new_param="value")
 ```
+
+---
+
+## Contributing
+
+Contributions are welcome. See [CONTRIBUTING.md](CONTRIBUTING.md) for setup, coding style, how to add a new endpoint, and the PR checklist.
 
 ---
 

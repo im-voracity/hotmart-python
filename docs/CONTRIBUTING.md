@@ -1,10 +1,25 @@
 # Contributing to hotmart-python
 
-Contributions are welcome. This guide covers the development setup, how to run the test suite, and how to add a new endpoint.
+Thank you for your interest in contributing! This guide covers everything you need: development setup, running tests, coding standards, and how to add a new Hotmart API endpoint.
+
+**Documentacao em Portugues disponivel em [CONTRIBUTING-ptBR.md](CONTRIBUTING-ptBR.md).**
 
 ---
 
-## Development Setup
+## Table of Contents
+
+- [Getting Started](#getting-started)
+- [Running Tests](#running-tests)
+- [Linting and Formatting](#linting-and-formatting)
+- [Type Checking](#type-checking)
+- [Code Style](#code-style)
+- [How to Add a New Endpoint](#how-to-add-a-new-endpoint)
+- [API Reference](#api-reference)
+- [Pull Request Checklist](#pull-request-checklist)
+
+---
+
+## Getting Started
 
 This project uses [uv](https://github.com/astral-sh/uv) for dependency management.
 
@@ -21,49 +36,51 @@ cd hotmart-python
 uv sync
 ```
 
-That is all. No virtual environment setup needed — `uv` handles it.
+That is all. `uv` creates and manages the virtual environment automatically — no manual `venv` setup needed.
 
 ---
 
 ## Running Tests
 
 ```bash
-uv run pytest tests/
+uv run pytest tests/ --ignore=tests/test_integration.py
 ```
 
 For verbose output with short tracebacks:
 
 ```bash
-uv run pytest tests/ -v --tb=short
+uv run pytest tests/ --ignore=tests/test_integration.py -v --tb=short
 ```
 
-All tests use `unittest.mock` — no real HTTP calls are made. There are no sandbox or production credentials required to run the test suite.
+All unit tests use `respx` to mock HTTP — no real API calls, no credentials required.
+
+### Integration tests
+
+Integration tests run against the real Hotmart API. They are skipped automatically if credentials are not present:
+
+```bash
+# Requires HOTMART_CLIENT_ID, HOTMART_CLIENT_SECRET, HOTMART_BASIC in environment
+set -a && source .env && set +a
+uv run pytest tests/test_integration.py -v
+```
+
+See `.env.example` for the expected environment variables.
 
 ---
 
-## Linting
+## Linting and Formatting
 
 ```bash
+# Check for lint errors
 uv run ruff check src/ tests/
-```
 
-Fix auto-fixable issues:
-
-```bash
+# Auto-fix what can be fixed
 uv run ruff check --fix src/ tests/
-```
 
----
-
-## Formatting
-
-```bash
+# Format
 uv run ruff format src/ tests/
-```
 
-Check without modifying:
-
-```bash
+# Check format without modifying files
 uv run ruff format --check src/ tests/
 ```
 
@@ -75,6 +92,8 @@ uv run ruff format --check src/ tests/
 uv run mypy src/hotmart/
 ```
 
+The project runs `mypy --strict`. All public APIs must be fully annotated.
+
 ---
 
 ## Code Style
@@ -82,9 +101,9 @@ uv run mypy src/hotmart/
 - **No nested `if` statements.** Use early returns and guard clauses instead.
 - **Early returns first.** Validate inputs and handle error cases at the top of a function before the happy path.
 - **Guard clauses.** Prefer `if not x: return` over `if x: <big block>`.
-- **Docstrings in EN + PT-BR.** Every public method should have a brief English description followed by the Portuguese translation. See existing resource methods for the pattern.
+- **Docstrings in EN + PT-BR.** Every public method should have a brief English description followed by a Portuguese translation. See existing resource methods for the pattern.
 
-Example of preferred style:
+**Preferred:**
 
 ```python
 def my_method(self, value: str | None) -> str:
@@ -95,7 +114,7 @@ def my_method(self, value: str | None) -> str:
     return value.strip()
 ```
 
-Not:
+**Not:**
 
 ```python
 def my_method(self, value: str | None) -> str:
@@ -109,11 +128,9 @@ def my_method(self, value: str | None) -> str:
 
 ## How to Add a New Endpoint
 
-Follow these steps to add a new Hotmart API endpoint to the SDK.
-
 ### Step 1 — Identify the resource
 
-Determine which resource group the endpoint belongs to (sales, subscriptions, products, coupons, club, events, or negotiation). If it is a new group, create a new resource file.
+Determine which resource group the endpoint belongs to (`sales`, `subscriptions`, `products`, `coupons`, `club`, `events`, or `negotiation`). If it belongs to a new group, create a new resource file following the existing patterns.
 
 ### Step 2 — Add or update the Pydantic model
 
@@ -152,14 +169,14 @@ def my_new_method(
     return self._get("/my-endpoint", params=params, cast_to=PaginatedResponse[MyNewModel])  # type: ignore[return-value]
 ```
 
-If the endpoint is paginated, also add an `*_autopaginate` variant.
+If the endpoint is paginated, also add an `*_autopaginate` variant following the existing pattern.
 
 ### Step 4 — Write tests
 
-Add tests in `tests/`. Follow the existing test patterns — mock `BaseSyncClient._request` and assert the correct URL and parameters are passed.
+Add tests in `tests/resources/`. Follow the existing test patterns — mock `BaseSyncClient._request` and assert the correct URL and parameters are passed:
 
 ```python
-# tests/test_sales.py
+# tests/resources/test_sales.py
 def test_my_new_method(client, mock_paginated_response):
     with patch.object(client, "_request", return_value=mock_paginated_response) as mock_req:
         client.sales.my_new_method(some_param="value")
@@ -174,11 +191,19 @@ Update `docs/README.md` and `docs/README-ptBR.md` to document the new method in 
 
 ---
 
+## API Reference
+
+The file [`HOTMART-API-REFERENCE.md`](HOTMART-API-REFERENCE.md) contains a complete, machine-readable reference of all Hotmart API endpoints. It exists because the official Hotmart documentation is rendered as a JavaScript SPA and is not accessible to crawlers or AI agents.
+
+If you are implementing a new endpoint, this file is your primary reference for request parameters, response shapes, and known quirks.
+
+---
+
 ## Pull Request Checklist
 
 Before submitting a PR, verify:
 
-- [ ] `uv run pytest tests/` passes with no failures
+- [ ] `uv run pytest tests/ --ignore=tests/test_integration.py` passes with no failures
 - [ ] `uv run ruff check src/ tests/` reports no errors
 - [ ] `uv run ruff format --check src/ tests/` reports no changes needed
 - [ ] `uv run mypy src/hotmart/` reports no errors
