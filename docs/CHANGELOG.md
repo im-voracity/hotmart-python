@@ -6,6 +6,17 @@ O formato segue [Keep a Changelog](https://keepachangelog.com/en/1.0.0/) e o pro
 
 ---
 
+## [1.0.4] - 2026-03-28
+
+Versão de manutenção com melhorias de documentação. Nenhuma mudança no código da biblioteca.
+
+### Changed
+
+- Seção "Processing pages individually" adicionada ao README (EN e PT-BR): padrão de loop manual com `page_token` para processamento página a página com efeitos colaterais (checkpoint, batch flush, etc.)
+- Seção "Retry behavior" expandida no README (EN e PT-BR): tabela clara de quais erros são reprocessados automaticamente, quais disparam renovação de token e quais são lançados imediatamente
+
+---
+
 ## [1.0.3] - 2026-03-26
 
 ### Fixed

@@ -357,6 +357,27 @@ for venda in client.sales.history_autopaginate(buyer_name="Paula"):
 
 O iterador para automaticamente quando não há mais páginas — sem gerenciamento de token, sem condições de loop.
 
+### Processamento página a página
+
+Se você precisar agir ao final de cada página — salvar um checkpoint, enviar um batch para o banco, atualizar uma barra de progresso — use o método de página única e controle o loop manualmente:
+
+```python
+page_token = None
+while True:
+    pagina = client.sales.history(start_date=1700000000000, page_token=page_token)
+
+    for venda in pagina.items:
+        processar(venda)
+
+    salvar_checkpoint(page_token)  # efeito colateral por página
+
+    if not pagina.page_info or not pagina.page_info.next_page_token:
+        break
+    page_token = pagina.page_info.next_page_token
+```
+
+Use `*_autopaginate` quando precisar apenas iterar todos os registros. Use o loop manual quando precisar agir entre páginas.
+
 ---
 
 ## Modo Sandbox
@@ -417,7 +438,19 @@ Hierarquia de exceções:
 | `APIStatusError` | outros | Status HTTP inesperado |
 | `HotmartError` | — | Classe base para todos os erros do SDK |
 
-O SDK realiza retentativas automáticas em erros transitórios (5xx, 429) com backoff exponencial (`0.5 × 2^attempt + jitter`, cap 30s). Configure via `max_retries`:
+### Comportamento de retentativas
+
+Nem todos os erros são tratados da mesma forma — o SDK age diferente antes de lançar cada um:
+
+| Comportamento | Exceções |
+|---------------|---------|
+| **Reprocessado com backoff exponencial** — lançado apenas após esgotar todas as tentativas | `RateLimitError` (429), `InternalServerError` (500, 502, 503) |
+| **Dispara renovação de token + uma nova tentativa automática** — nunca lançado por token expirado | `AuthenticationError` originado de 401 |
+| **Lançado imediatamente, sem retentativa** | `BadRequestError` (400), `AuthenticationError` de 403, `NotFoundError` (404), `APIStatusError` |
+
+Na prática: um `RateLimitError` no seu `except` significa que a Hotmart continuou retornando 429 mesmo após todas as tentativas. Um `AuthenticationError` indica credenciais genuinamente inválidas — não simplesmente um token expirado no meio da execução.
+
+Fórmula do backoff: `0.5s × 2^attempt + jitter` (jitter 0–0.5s, cap 30s). Para 429, o header `RateLimit-Reset` é usado diretamente quando presente. Configure o número de tentativas via `max_retries`:
 
 ```python
 client = Hotmart(..., max_retries=5)
