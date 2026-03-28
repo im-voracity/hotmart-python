@@ -358,6 +358,27 @@ for sale in client.sales.history_autopaginate(buyer_name="Paula"):
 
 The iterator stops when there are no more pages — no token management, no loop conditions.
 
+### Processing pages individually
+
+If you need to act at the end of each page — flush a batch to a database, save a checkpoint, update a progress bar — use the single-page method and control the loop yourself:
+
+```python
+page_token = None
+while True:
+    page = client.sales.history(start_date=1700000000000, page_token=page_token)
+
+    for sale in page.items:
+        process(sale)
+
+    save_checkpoint(page_token)  # per-page side effect
+
+    if not page.page_info or not page.page_info.next_page_token:
+        break
+    page_token = page.page_info.next_page_token
+```
+
+Use `*_autopaginate` when you only need to iterate all records. Use the manual loop when you need to act between pages.
+
 ---
 
 ## Sandbox Mode
@@ -418,7 +439,19 @@ Exception hierarchy:
 | `APIStatusError` | other | Unexpected HTTP status |
 | `HotmartError` | — | Base class for all SDK errors |
 
-The SDK retries automatically on transient errors (5xx, 429) with exponential backoff (`0.5 × 2^attempt + jitter`, cap 30s). Configure via `max_retries`:
+### Retry behavior
+
+Not all errors are equal — the SDK handles them differently before raising:
+
+| Behavior | Exceptions |
+|----------|-----------|
+| **Retried with exponential backoff** — raised only after all retries are exhausted | `RateLimitError` (429), `InternalServerError` (500, 502, 503) |
+| **Triggers token refresh + one automatic retry** — never raised for an expired token | `AuthenticationError` from 401 |
+| **Raised immediately, no retry** | `BadRequestError` (400), `AuthenticationError` from 403, `NotFoundError` (404), `APIStatusError` |
+
+In practice: a `RateLimitError` in your `except` block means Hotmart was still returning 429 after all retries. An `AuthenticationError` means your credentials are genuinely invalid, not just that a token expired mid-run.
+
+Backoff formula: `0.5s × 2^attempt + jitter` (jitter 0–0.5s, cap 30s). For 429, the `RateLimit-Reset` header is used directly when present. Configure the number of retries via `max_retries`:
 
 ```python
 client = Hotmart(..., max_retries=5)
