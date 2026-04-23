@@ -49,4 +49,5 @@ class AsyncTokenManager:
         data = response.json()
         self._token = data["access_token"]
         self._expires_at = time.time() + data["expires_in"]
-        return self._token  # type: ignore[return-value]
+        assert self._token is not None
+        return self._token

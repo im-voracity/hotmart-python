@@ -80,13 +80,13 @@ class AsyncSubscriptions(AsyncAPIResource):
             page_token = page.page_info.next_page_token
 
     async def purchases(self, subscriber_code: str, **kwargs: Any) -> list[SubscriptionPurchase]:
-        data = await self._get(f"/subscriptions/{subscriber_code}/purchases")
+        data: Any = await self._get(f"/subscriptions/{subscriber_code}/purchases")
         if not data:
             return []
         return [SubscriptionPurchase.model_validate(item) for item in data]
 
     async def transactions(self, subscriber_code: str, **kwargs: Any) -> list[Any]:
-        data = await self._get(f"/subscriptions/{subscriber_code}/transactions")
+        data: Any = await self._get(f"/subscriptions/{subscriber_code}/transactions")
         return data if data else []
 
     async def cancel(self, subscriber_code: list[str], *, send_mail: bool = True) -> SubscriptionBulkResponse | None:

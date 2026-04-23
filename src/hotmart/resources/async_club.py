@@ -17,7 +17,7 @@ class AsyncClub(AsyncAPIResource):
         if is_extra is not None:
             params["is_extra"] = is_extra
         params.update(kwargs)
-        data = await self._get("/modules", api_domain="club", params=params)
+        data: Any = await self._get("/modules", api_domain="club", params=params)
         if not data:
             return []
         return [ModuleItem.model_validate(item) for item in data]
@@ -28,7 +28,7 @@ class AsyncClub(AsyncAPIResource):
         Retorna lista de páginas para o módulo informado.
         """
         params: dict[str, Any] = {"subdomain": subdomain, "module_id": module_id, **kwargs}
-        data = await self._get("/pages", api_domain="club", params=params)
+        data: Any = await self._get("/pages", api_domain="club", params=params)
         if not data:
             return []
         return [PageItem.model_validate(item) for item in data]
@@ -39,7 +39,7 @@ class AsyncClub(AsyncAPIResource):
         Retorna lista de alunos para o subdomínio informado.
         """
         params: dict[str, Any] = {"subdomain": subdomain, **kwargs}
-        data = await self._get("/students", api_domain="club", params=params)
+        data: Any = await self._get("/students", api_domain="club", params=params)
         if not data:
             return []
         return [StudentItem.model_validate(item) for item in data]
@@ -55,7 +55,7 @@ class AsyncClub(AsyncAPIResource):
         if student_email is not None:
             params["student_email"] = student_email
         params.update(kwargs)
-        data = await self._get("/students/progress", api_domain="club", params=params)
+        data: Any = await self._get("/students/progress", api_domain="club", params=params)
         if not data:
             return []
         return [StudentProgress.model_validate(item) for item in data]

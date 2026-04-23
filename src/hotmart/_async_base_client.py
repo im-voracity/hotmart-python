@@ -77,12 +77,12 @@ class BaseAsyncClient:
             content = response.content
             if not content or content == b"{}":
                 return None
-            return response.json()  # type: ignore[return-value]
+            return response.json()  # type: ignore[no-any-return]
 
         if not response.content or response.content == b"{}":
-            return cast_to.model_validate({})  # type: ignore[union-attr]
+            return cast_to.model_validate({})  # type: ignore[no-any-return, attr-defined]
 
-        return cast_to.model_validate(response.json())  # type: ignore[union-attr]
+        return cast_to.model_validate(response.json())  # type: ignore[no-any-return, attr-defined]
 
     async def _execute_with_retry(
         self,
