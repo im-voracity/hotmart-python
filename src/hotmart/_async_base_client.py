@@ -33,6 +33,9 @@ class BaseAsyncClient:
         return self
 
     async def __aexit__(self, *_: Any) -> None:
+        await self.aclose()
+
+    async def aclose(self) -> None:
         await self._http.aclose()
 
     def _base_url(self, api_domain: str) -> str:
