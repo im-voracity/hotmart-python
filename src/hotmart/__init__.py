@@ -1,3 +1,4 @@
+from ._async_client import AsyncHotmart
 from ._client import Hotmart
 from ._exceptions import (
     APIStatusError,
@@ -41,10 +42,11 @@ from .models import (
     TicketItem,
 )
 
-__version__ = "1.0.0"
+__version__ = "1.1.0"
 
 __all__ = [
     "Hotmart",
+    "AsyncHotmart",
     "PaginatedResponse", "Price", "PageInfo",
     "PurchaseStatus", "SubscriptionStatus", "PaymentType",
     "CommissionSource", "ProductStatus", "ProductFormat",
