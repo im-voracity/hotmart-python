@@ -19,20 +19,21 @@ This SDK handles OAuth, token refresh, retries, rate limits, and pagination auto
 
 ## Features
 
+- **Sync and async clients** — `Hotmart` for synchronous code, `AsyncHotmart` for `asyncio`/`async`-first frameworks (FastAPI, aiohttp, etc.). Identical API surface, full feature parity.
 - **Fully typed responses** — every API response is a Pydantic v2 model. Your IDE completes field names; no raw dicts, no guessing.
-- **Autopaginate iterators** — every paginated endpoint ships a `*_autopaginate` variant that transparently walks all pages. One `for` loop, all records.
-- **Automatic token management** — OAuth token is acquired, cached, and proactively refreshed 5 minutes before expiry. Thread-safe with double-checked locking.
+- **Autopaginate iterators** — every paginated endpoint ships a `*_autopaginate` variant that transparently walks all pages. One `for` loop (or `async for`), all records.
+- **Automatic token management** — OAuth token is acquired, cached, and proactively refreshed 5 minutes before expiry. Thread-safe (sync) and coroutine-safe (async) with double-checked locking.
 - **Retry with exponential backoff** — transient errors (5xx, 429) are retried automatically with jitter and `RateLimit-Reset` awareness. Configurable via `max_retries`.
 - **Proactive rate limit tracking** — monitors remaining requests per window and backs off before hitting the limit.
 - **Clean exception hierarchy** — catch only what you care about: `AuthenticationError`, `RateLimitError`, `NotFoundError`, `BadRequestError`, and more.
-- **httpx under the hood** — persistent connection pool, configurable timeouts, context manager support.
+- **httpx under the hood** — persistent connection pool, configurable timeouts, context manager support (`with` and `async with`).
 - **Forward-compatible kwargs** — extra `**kwargs` are passed directly as query params, so you can use undocumented or newly added Hotmart parameters without waiting for an SDK update.
 
 ---
 
 ## Design Principles
 
-- **One object, all resources.** Instantiate `Hotmart` once and access every resource group as an attribute: `client.sales`, `client.subscriptions`, `client.products`, etc.
+- **One object, all resources.** Instantiate `Hotmart` (or `AsyncHotmart`) once and access every resource group as an attribute: `client.sales`, `client.subscriptions`, `client.products`, etc.
 - **Fail loudly.** Errors are typed exceptions, never silently swallowed or buried in return values.
 - **No boilerplate.** Authentication, pagination, retries, and connection management are invisible by default. Opt in to configuration only when you need it.
 - **Strict typing.** `mypy --strict` passes. All public APIs are fully annotated. Models use `extra="allow"` so new API fields don't break your code.
@@ -56,6 +57,7 @@ This SDK handles OAuth, token refresh, retries, rate limits, and pagination auto
 - [Sandbox Mode](#sandbox-mode)
 - [Error Handling](#error-handling)
 - [Logging](#logging)
+- [Async Client](#async-client)
 - [Context Manager](#context-manager)
 - [Extra Parameters (kwargs)](#extra-parameters-kwargs)
 - [Documentation](#documentation)
@@ -487,21 +489,75 @@ Tokens and credentials are masked in all log output.
 
 ---
 
+## Async Client
+
+`AsyncHotmart` provides the same API surface as `Hotmart`, but with native `async/await` support — ideal for `asyncio`-based frameworks like FastAPI, aiohttp, and Starlette.
+
+```python
+from hotmart import AsyncHotmart
+
+async with AsyncHotmart(
+    client_id="your_client_id",
+    client_secret="your_client_secret",
+    basic="Basic your_base64_credentials",
+) as client:
+    # Single page
+    page = await client.sales.history(buyer_name="Paula")
+
+    # Autopaginate with async for
+    async for sale in client.sales.history_autopaginate(transaction_status="APPROVED"):
+        print(sale.purchase.transaction)
+
+    # Concurrent requests with asyncio.gather
+    import asyncio
+    sales, subs, products = await asyncio.gather(
+        client.sales.history(),
+        client.subscriptions.list(),
+        client.products.list(),
+    )
+```
+
+All resource methods, autopagination iterators, token refresh, retry logic, and rate limiting work identically to the sync client. The constructor accepts the same parameters:
+
+```python
+client = AsyncHotmart(
+    client_id="...",
+    client_secret="...",
+    basic="Basic ...",
+    sandbox=False,       # same as sync
+    max_retries=3,       # same as sync
+    timeout=30.0,        # same as sync
+    log_level=logging.WARNING,
+)
+```
+
+> **Resource cleanup:** Always use `async with` or call `await client.aclose()` explicitly. Without cleanup, the underlying `httpx.AsyncClient` will leak connections.
+
+---
+
 ## Context Manager
 
-`Hotmart` supports the context manager protocol for automatic cleanup of the underlying HTTP connection pool:
+Both `Hotmart` and `AsyncHotmart` support context managers for automatic cleanup of the underlying HTTP connection pool:
 
 ```python
 from hotmart import Hotmart
 
-with Hotmart(
-    client_id="...",
-    client_secret="...",
-    basic="Basic ...",
-) as client:
+# Sync
+with Hotmart(client_id="...", client_secret="...", basic="Basic ...") as client:
     for sale in client.sales.history_autopaginate():
         print(sale.purchase.transaction)
 ```
+
+```python
+from hotmart import AsyncHotmart
+
+# Async
+async with AsyncHotmart(client_id="...", client_secret="...", basic="Basic ...") as client:
+    async for sale in client.sales.history_autopaginate():
+        print(sale.purchase.transaction)
+```
+
+For long-lived clients outside a context manager, call `client.close()` (sync) or `await client.aclose()` (async) explicitly.
 
 ---
 

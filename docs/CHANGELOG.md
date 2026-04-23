@@ -6,6 +6,24 @@ O formato segue [Keep a Changelog](https://keepachangelog.com/en/1.0.0/) e o pro
 
 ---
 
+## [1.1.0] - 2026-04-23
+
+### Added
+
+- **`AsyncHotmart` client** — native async support via `httpx.AsyncClient`, `asyncio.Lock`, and `async/await` throughout. Full feature parity with the sync `Hotmart` client. Closes [#17](https://github.com/im-voracity/hotmart-python/issues/17)
+- All 7 async resource groups: `AsyncSales`, `AsyncSubscriptions`, `AsyncProducts`, `AsyncCoupons`, `AsyncClub`, `AsyncEvents`, `AsyncNegotiation`
+- `AsyncIterator`-based autopagination (`async for item in client.sales.history_autopaginate():`)
+- `async with AsyncHotmart(...) as client:` context manager with `aclose()` for explicit cleanup
+- `close()` method on sync `Hotmart` client (mirrors `aclose()` on async)
+- 44 async unit tests + 24 async integration tests against the real Hotmart API
+- `pytest-asyncio` added to dev dependencies with `asyncio_mode = "auto"`
+
+### Design decision
+
+Independent parallel implementation (duplication) was chosen over shared generics, async-first wrappers, or transport abstractions. At ~1,050 lines of source, duplication is the most pragmatic approach — no breaking changes, no runtime overhead, no complex typing. Sync-safe modules (`_config`, `_exceptions`, `_logging`, `_retry`, `models/`) are reused without duplication.
+
+---
+
 ## [1.0.4] - 2026-03-28
 
 Versão de manutenção com melhorias de documentação. Nenhuma mudança no código da biblioteca.

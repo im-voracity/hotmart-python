@@ -1,7 +1,7 @@
 import httpx
 import pytest
 
-from hotmart import Hotmart
+from hotmart import AsyncHotmart, Hotmart
 
 TOKEN_URL = "https://api-sec-vlc.hotmart.com/security/oauth/token"
 
@@ -11,3 +11,13 @@ def client(respx_mock):
         "access_token": "test_token", "token_type": "bearer", "expires_in": 86400,
     }))
     return Hotmart(client_id="test_id", client_secret="test_secret", basic="Basic dGVzdA==", max_retries=0)
+
+
+@pytest.fixture
+async def async_client(respx_mock):
+    respx_mock.post(TOKEN_URL).mock(return_value=httpx.Response(200, json={
+        "access_token": "test_token", "token_type": "bearer", "expires_in": 86400,
+    }))
+    async with AsyncHotmart(client_id="test_id", client_secret="test_secret",
+                            basic="Basic dGVzdA==", max_retries=0) as client:
+        yield client

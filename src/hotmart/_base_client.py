@@ -40,6 +40,9 @@ class BaseSyncClient:
         return self
 
     def __exit__(self, *_: Any) -> None:
+        self.close()
+
+    def close(self) -> None:
         self._http.close()
 
     def _base_url(self, api_domain: str) -> str:
