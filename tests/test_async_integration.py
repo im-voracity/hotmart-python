@@ -42,7 +42,7 @@ def _skip_if_no_creds():
 # Fixtures
 # ---------------------------------------------------------------------------
 
-@pytest.fixture(scope="module")
+@pytest.fixture
 async def live_client():
     _skip_if_no_creds()
     cid, secret, basic = _creds()  # type: ignore[misc]
