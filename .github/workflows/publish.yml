@@ -80,17 +80,24 @@ jobs:
           version: "latest"
 
       - name: Install from Test PyPI
+        env:
+          TAG_VERSION: ${{ github.ref_name }}
         run: |
+          VERSION="${TAG_VERSION#v}"
           uv venv .venv
           uv pip install --python .venv/bin/python \
             --index-url https://test.pypi.org/simple/ \
             --extra-index-url https://pypi.org/simple/ \
-            hotmart-python
+            "hotmart-python==$VERSION"
 
       - name: Smoke test
+        env:
+          TAG_VERSION: ${{ github.ref_name }}
         run: |
+          VERSION="${TAG_VERSION#v}"
           .venv/bin/python -c "
           import hotmart
+          assert hotmart.__version__ == '$VERSION', f'expected $VERSION, got {hotmart.__version__}'
           print('version:', hotmart.__version__)
           from hotmart import Hotmart, AsyncHotmart
           print('sync import OK')
