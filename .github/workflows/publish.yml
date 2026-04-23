@@ -25,7 +25,7 @@ jobs:
         run: uv run ruff check .
 
       - name: Tests
-        run: uv run pytest tests/ --ignore=tests/test_integration.py -v
+        run: uv run pytest tests/ --ignore=tests/test_integration.py --ignore=tests/test_async_integration.py -v
 
   build:
     name: Build
@@ -92,8 +92,9 @@ jobs:
           .venv/bin/python -c "
           import hotmart
           print('version:', hotmart.__version__)
-          from hotmart import Hotmart
-          print('import OK')
+          from hotmart import Hotmart, AsyncHotmart
+          print('sync import OK')
+          print('async import OK')
           "
 
   publish-pypi:

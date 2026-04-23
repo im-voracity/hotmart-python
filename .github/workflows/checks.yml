@@ -35,4 +35,4 @@ jobs:
         run: uv run ruff check .
 
       - name: Unit tests
-        run: uv run pytest tests/ --ignore=tests/test_integration.py -v
+        run: uv run pytest tests/ --ignore=tests/test_integration.py --ignore=tests/test_async_integration.py -v
